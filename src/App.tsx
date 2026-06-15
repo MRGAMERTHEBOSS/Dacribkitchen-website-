@@ -1799,7 +1799,7 @@ export default function App() {
                 placeholder="Search tender lamb chops, blackened salmon, wing flavors..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent border-0 focus:outline-none pl-11 pr-4 py-3 text-xs md:text-sm text-emerald-50 placeholder:text-emerald-500/35 font-sans"
+                className="w-full bg-transparent border-0 focus:outline-none pl-11 pr-4 py-3 text-xs md:text-sm text-emerald-50 placeholder:text-emerald-400/60 font-sans"
               />
             </div>
 
@@ -2820,10 +2820,10 @@ export default function App() {
                       onChange={(e) => setSelectedCraving(e.target.value)}
                       className="w-full bg-[#061510] border border-emerald-900/40 text-white font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5C35] cursor-pointer"
                     >
-                      <option value="creamy & velvety" className="bg-[#061510] text-[#FF5C35]">Creamy & Velvet (Alfredo)</option>
-                      <option value="spicy & heavy" className="bg-[#061510] text-[#FF5C35]">Cajun Searing Spices (Seafood)</option>
-                      <option value="smoky & savory" className="bg-[#061510] text-[#FF5C35]">Smoky Honey Glazes (Platters)</option>
-                      <option value="fresh & lightweight" className="bg-[#061510] text-[#FF5C35]">Crisp & Chilled (Salads & Pasta)</option>
+                      <option value="creamy & velvety" className="bg-[#0b281f] text-white">Creamy & Velvet (Alfredo)</option>
+                      <option value="spicy & heavy" className="bg-[#0b281f] text-white">Cajun Searing Spices (Seafood)</option>
+                      <option value="smoky & savory" className="bg-[#0b281f] text-white">Smoky Honey Glazes (Platters)</option>
+                      <option value="fresh & lightweight" className="bg-[#0b281f] text-white">Crisp & Chilled (Salads & Pasta)</option>
                     </select>
                   </div>
 
@@ -2835,14 +2835,14 @@ export default function App() {
                       onChange={(e) => setSelectedProtein(e.target.value)}
                       className="w-full bg-[#061510] border border-emerald-900/40 text-white font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5C35] cursor-pointer"
                     >
-                      <option value="any" className="bg-[#061510] text-[#FF5C35]">Surprise Me (Any Meat/Fish)</option>
-                      <option value="lamb chops" className="bg-[#061510] text-[#FF5C35]">Gourmet Lamb Chops</option>
-                      <option value="turkey wing" className="bg-[#061510] text-[#FF5C35]">Slow-Cooked Turkey Wings</option>
-                      <option value="salmon" className="bg-[#061510] text-[#FF5C35]">Cajun Blackened Salmon</option>
-                      <option value="steak" className="bg-[#061510] text-[#FF5C35]">Sautéed Steak Bits</option>
-                      <option value="chicken" className="bg-[#061510] text-[#FF5C35]">Scrumptious Chicken Breast</option>
-                      <option value="shrimp" className="bg-[#061510] text-[#FF5C35]">Butter Sautéed Jumbo Shrimp</option>
-                      <option value="wings" className="bg-[#061510] text-[#FF5C35]">Wing Ding Platter</option>
+                      <option value="any" className="bg-[#0b281f] text-white">Surprise Me (Any Meat/Fish)</option>
+                      <option value="lamb chops" className="bg-[#0b281f] text-white">Gourmet Lamb Chops</option>
+                      <option value="turkey wing" className="bg-[#0b281f] text-white">Slow-Cooked Turkey Wings</option>
+                      <option value="salmon" className="bg-[#0b281f] text-white">Cajun Blackened Salmon</option>
+                      <option value="steak" className="bg-[#0b281f] text-white">Sautéed Steak Bits</option>
+                      <option value="chicken" className="bg-[#0b281f] text-white">Scrumptious Chicken Breast</option>
+                      <option value="shrimp" className="bg-[#0b281f] text-white">Butter Sautéed Jumbo Shrimp</option>
+                      <option value="wings" className="bg-[#0b281f] text-white">Wing Ding Platter</option>
                     </select>
                   </div>
 
@@ -2854,9 +2854,9 @@ export default function App() {
                       onChange={(e) => setSelectedHunger(e.target.value)}
                       className="w-full bg-[#061510] border border-emerald-900/40 text-white font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5C35] cursor-pointer"
                     >
-                      <option value="snack" className="bg-[#061510] text-[#FF5C35]">Cozy Snack (Chilled Sides)</option>
-                      <option value="platter" className="bg-[#061510] text-[#FF5C35]">Standard Soul Base Platter</option>
-                      <option value="feast" className="bg-[#061510] text-[#FF5C35]">Monster Feast (Combos & Extra Helper)</option>
+                      <option value="snack" className="bg-[#0b281f] text-white">Cozy Snack (Chilled Sides)</option>
+                      <option value="platter" className="bg-[#0b281f] text-white">Standard Soul Base Platter</option>
+                      <option value="feast" className="bg-[#0b281f] text-white">Monster Feast (Combos & Extra Helper)</option>
                     </select>
                   </div>
 
@@ -2868,10 +2868,10 @@ export default function App() {
                       onChange={(e) => setSelectedSpice(e.target.value)}
                       className="w-full bg-[#061510] border border-emerald-900/40 text-white font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5C35] cursor-pointer"
                     >
-                      <option value="none" className="bg-[#061510] text-[#FF5C35]">None (Completely Sweet & Mild)</option>
-                      <option value="mild" className="bg-[#061510] text-[#FF5C35]">Mild House Dusting</option>
-                      <option value="hot" className="bg-[#061510] text-[#FF5C35]">Searing Honey Hot drizzle</option>
-                      <option value="volcano" className="bg-[#061510] text-[#FF5C35]">Volcano Mango Habanero Infusion</option>
+                      <option value="none" className="bg-[#0b281f] text-white">None (Completely Sweet & Mild)</option>
+                      <option value="mild" className="bg-[#0b281f] text-white">Mild House Dusting</option>
+                      <option value="hot" className="bg-[#0b281f] text-white">Searing Honey Hot drizzle</option>
+                      <option value="volcano" className="bg-[#0b281f] text-white">Volcano Mango Habanero Infusion</option>
                     </select>
                   </div>
                 </div>
@@ -3001,7 +3001,7 @@ export default function App() {
           <div className="text-[9px] text-[#FF5C35] uppercase tracking-widest font-mono font-bold">
             NO PORK • ZERO LARD • HEAVY PORTIONS ALWAYS
           </div>
-          <p className="text-[10px] text-emerald-950/80 border-t border-emerald-950/25 pt-5 font-mono">
+          <p className="text-[10px] text-neutral-500/70 border-t border-emerald-950/25 pt-5 font-mono">
             © {new Date().getFullYear()} DaCrib Kitchen. All Rights Reserved. Crafted exclusively using advanced responsive grid frameworks.
           </p>
         </footer>
