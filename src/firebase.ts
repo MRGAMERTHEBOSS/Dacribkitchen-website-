@@ -100,6 +100,7 @@ export interface PastOrder {
   createdAt: string;
   rating?: number;
   review?: string;
+  trackingInfo?: string;
 }
 
 // Helper to load local user accounts
@@ -285,15 +286,24 @@ export async function fetchAllOrders(): Promise<PastOrder[]> {
 }
 
 // Update order status (for Owner dashboard)
-export async function updateOrderStatus(orderId: string, status: PastOrder['status'] | string): Promise<void> {
+export async function updateOrderStatus(
+  orderId: string, 
+  status: PastOrder['status'] | string, 
+  trackingInfo?: string
+): Promise<void> {
+  const updatePayload: any = { status };
+  if (trackingInfo !== undefined) {
+    updatePayload.trackingInfo = trackingInfo;
+  }
+
   if (isFirebaseMode && db) {
     const path = `orders/${orderId}`;
     try {
-      await setDoc(doc(db, 'orders', orderId), { status }, { merge: true });
+      await setDoc(doc(db, 'orders', orderId), updatePayload, { merge: true });
       
       const data = localStorage.getItem('dacrib_local_orders');
       let allOrders: PastOrder[] = data ? JSON.parse(data) : [];
-      allOrders = allOrders.map(o => o.orderId === orderId ? { ...o, status: status as any } : o);
+      allOrders = allOrders.map(o => o.orderId === orderId ? { ...o, ...updatePayload } : o);
       localStorage.setItem('dacrib_local_orders', JSON.stringify(allOrders));
       
       return;
@@ -310,7 +320,7 @@ export async function updateOrderStatus(orderId: string, status: PastOrder['stat
   // Local fallback
   const data = localStorage.getItem('dacrib_local_orders');
   let allOrders: PastOrder[] = data ? JSON.parse(data) : [];
-  allOrders = allOrders.map(o => o.orderId === orderId ? { ...o, status: status as any } : o);
+  allOrders = allOrders.map(o => o.orderId === orderId ? { ...o, ...updatePayload } : o);
   localStorage.setItem('dacrib_local_orders', JSON.stringify(allOrders));
 }
 

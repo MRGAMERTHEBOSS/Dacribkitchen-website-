@@ -40,7 +40,7 @@ import {
 import { CartItem, OrderType, PreferredPayment, OrderTimeType } from './types';
 import { entrees, alfredos, salads, wingFlavors, sides, premiumCombos, faqs } from './data';
 import { jsPDF } from 'jspdf';
-import logoImage from './IMG_2313.jpg';
+import confetti from 'canvas-confetti';
 
 // Dual-mode authentication & history persistence import
 import {
@@ -155,10 +155,10 @@ export default function App() {
     }
   }, [isOwnerUser]);
 
-  const handleUpdateStatus = async (orderId: string, newStatus: string) => {
+  const handleUpdateStatus = async (orderId: string, newStatus: string, trackingInfo?: string) => {
     try {
-      await updateOrderStatus(orderId, newStatus);
-      setSuccessToast(`Order #${orderId} status updated to ${newStatus.toUpperCase()}! 🍳`);
+      await updateOrderStatus(orderId, newStatus, trackingInfo);
+      setSuccessToast(`Order #${orderId} updated! 🍳`);
       setTimeout(() => setSuccessToast(null), 3500);
       loadAllAdminOrders();
       if (currentUser) {
@@ -214,6 +214,31 @@ export default function App() {
     }
   }, []);
 
+  // Real-time automatic synchronization of order statuses and tracking details
+  useEffect(() => {
+    let intervalId: any = null;
+
+    const runSync = () => {
+      // If user is logged in, auto pull their latest statuses & tracking info in background
+      if (currentUser?.uid) {
+        loadOrders(currentUser.uid);
+      }
+      // If user is the store owner, auto-refresh the master admin booking system queue
+      if (isOwnerUser) {
+        loadAllAdminOrders();
+      }
+    };
+
+    // Auto-poll securely once every 4 seconds
+    intervalId = setInterval(runSync, 4000);
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [currentUser?.uid, isOwnerUser]);
+
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
@@ -245,8 +270,33 @@ export default function App() {
         let matchedProfile: UserProfile | null = null;
 
         if (isFirebaseMode && auth) {
-          const cred = await signInWithEmailAndPassword(auth, authEmail.trim(), authPassword);
-          matchedProfile = await getUserProfile(cred.user.uid, cred.user.email || '');
+          try {
+            const cred = await signInWithEmailAndPassword(auth, authEmail.trim(), authPassword);
+            matchedProfile = await getUserProfile(cred.user.uid, cred.user.email || '');
+          } catch (signInErr: any) {
+            const errCode = signInErr?.code || '';
+            const errMsg = signInErr?.message || '';
+            const isMissingUserErr = errCode === 'auth/invalid-credential' || errCode === 'auth/user-not-found' || errMsg.includes('invalid-credential') || errMsg.includes('user-not-found');
+            
+            if (isMissingUserErr) {
+              try {
+                // Try registering them automatically for seamless testing experience
+                const cred = await createUserWithEmailAndPassword(auth, authEmail.trim(), authPassword);
+                const displayName = authEmail.trim().split('@')[0] || "VIP Guest";
+                matchedProfile = await registerProfile(authEmail.trim(), displayName, cred.user.uid);
+              } catch (signUpErr: any) {
+                const signUpCode = signUpErr?.code || '';
+                if (signUpCode === 'auth/email-already-in-use') {
+                  // Email was already registered, which means they actually entered an incorrect password!
+                  throw signInErr;
+                } else {
+                  throw signUpErr;
+                }
+              }
+            } else {
+              throw signInErr;
+            }
+          }
         } else {
           // Local credentials matching
           const localUsers = JSON.parse(localStorage.getItem('dacrib_local_users') || '[]');
@@ -940,6 +990,26 @@ export default function App() {
           setPastOrders(updated.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
         }
       }
+      
+      // Trigger confetti particle animation for excellent 5-star ratings!
+      if (rating === 5) {
+        confetti({
+          particleCount: 130,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#FF5C35', '#D4AF37', '#10B981', '#10B981', '#ffffff']
+        });
+        // Multi-burst sequence
+        setTimeout(() => {
+          confetti({
+            particleCount: 60,
+            spread: 60,
+            origin: { y: 0.65 },
+            colors: ['#FF5C35', '#D4AF37', '#ffffff']
+          });
+        }, 200);
+      }
+
       setSuccessToast("Thank you! Your meal rating and review have been recorded. 🧡");
       setTimeout(() => setSuccessToast(null), 3000);
     } catch (err) {
@@ -1374,10 +1444,19 @@ export default function App() {
         {/* HEADER / NAVIGATION NAVBAR MATCHING THE SCREENSHOT */}
         <header className="px-6 md:px-10 py-5 flex items-center justify-between border-b border-emerald-950 bg-[#061510]/95 backdrop-blur sticky top-0 z-30 shadow-md">
           
-          {/* Logo image next to the title */}
-          <div onClick={() => scrollTo('main-frame-root')} className="flex items-center space-x-3 cursor-pointer select-none">
-            <div className="w-12 h-12 rounded-2xl overflow-hidden bg-[#040E0A] shadow-md shadow-[#000000]/40 flex items-center justify-center">
-              <img src={logoImage} alt="DaCrib Kitchen logo" className="w-full h-full object-cover" />
+          {/* Custom SVG Logo: Heart plus fork/knife kitchen system */}
+          <div onClick={() => scrollTo('main-frame-root')} className="flex items-center space-x-2.5 cursor-pointer select-none">
+            <div className="w-10 h-10 rounded-2xl bg-[#FF5C35] flex items-center justify-center text-white shadow-md shadow-[#FF5C35]/20">
+              <svg viewBox="0 0 24 24" className="w-6 h-6 fill-none stroke-current stroke-2" strokeLinecap="round" strokeLinejoin="round">
+                {/* Heart-House base outline */}
+                <path d="M12 21C12 21 3 14 3 8.5C3 5.42 5.42 3 8.5 3C10.28 3 11.87 3.84 12 5.16 C12.13 3.84 13.72 3 15.5 3C18.58 3 21 5.42 21 8.5C21 14 12 21 12 21Z" fill="white" className="text-[#FF5C35]" />
+                {/* Fork icon */}
+                <path d="M10 7.5 L10 11.5" stroke="#FF5C35" strokeWidth="1.5" />
+                <path d="M9 7.5 L11 7.5 M9 8.5 L11 8.5" stroke="#FF5C35" strokeWidth="1" />
+                {/* Knife icon */}
+                <path d="M14 7.5 L14 12.5" stroke="#FF5C35" strokeWidth="1.5" />
+                <path d="M13.5 7.5 Q14.5 6.5 15.5 7.5" fill="none" stroke="#FF5C35" strokeWidth="1" />
+              </svg>
             </div>
             <div>
               <span className="font-display font-black text-xl tracking-tight text-white uppercase block font-sans">
@@ -3185,6 +3264,29 @@ export default function App() {
                                         ❌ Cancel
                                       </button>
                                     </div>
+
+                                    {/* Real-time Tracking/Courier update info */}
+                                    <div className="mt-2.5 pt-2 border-t border-emerald-950/20 flex gap-1.5 items-center">
+                                      <input
+                                        type="text"
+                                        id={`tracking-${ord.orderId}`}
+                                        placeholder="Live ETA / Courier status (e.g. ETA 15m, Sean driving)..."
+                                        defaultValue={ord.trackingInfo || ''}
+                                        className="flex-1 bg-black/60 border border-emerald-900/40 rounded px-2 py-1 text-[9px] font-mono text-amber-300 placeholder:text-emerald-700/60 focus:outline-none focus:border-[#FF5C35]"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const el = document.getElementById(`tracking-${ord.orderId}`) as HTMLInputElement;
+                                          if (el) {
+                                            handleUpdateStatus(ord.orderId, ord.status, el.value);
+                                          }
+                                        }}
+                                        className="bg-[#FF5C35] hover:bg-[#E64117] text-white px-2.5 py-1 rounded text-[8px] font-mono uppercase font-black tracking-wider transition cursor-pointer shrink-0"
+                                      >
+                                        Update Details
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
                               );
@@ -3220,7 +3322,7 @@ export default function App() {
                           .filter(o => o.status === 'completed')
                           .reduce((sum, o) => sum + o.grandTotal, 0);
                         
-                        const registrationBonus = 250;
+                        const registrationBonus = 0;
                         const totalEarnedPoints = registrationBonus + Math.round(completedOrdersSpend * 10);
                         const availablePoints = Math.max(0, totalEarnedPoints - redeemedPoints);
 
@@ -3476,9 +3578,21 @@ export default function App() {
                                   </div>
 
                                   {/* Miniature details for active progress */}
-                                  <p className="text-[10px] font-mono text-emerald-100/60 leading-normal bg-[#040C08]/90 p-2.5 rounded-lg border border-emerald-950/20 text-center">
-                                    Your order is currently <span className="font-extrabold text-white uppercase">{ord.status}</span>. We're packing those heavy Philly soul food portions exactly as you built them!
-                                  </p>
+                                  <div className="space-y-2">
+                                    <p className="text-[10px] font-mono text-emerald-100/60 leading-normal bg-[#040C08]/90 p-2.5 rounded-lg border border-emerald-950/20 text-center">
+                                      Your order is currently <span className="font-extrabold text-white uppercase">{ord.status.replace('_', ' ')}</span>. We're packing those heavy Philly soul food portions exactly as you built them!
+                                    </p>
+                                    
+                                    {ord.trackingInfo && (
+                                      <div className="bg-amber-950/20 border border-amber-900/30 p-2.5 rounded-lg text-left flex items-start gap-2 shadow-inner">
+                                        <span className="text-[11px] shrink-0 text-amber-400">🚚</span>
+                                        <div className="font-mono text-[9.5px] text-amber-200">
+                                          <span className="font-extrabold text-[#FF5C35] uppercase tracking-widest text-[8px] block mb-0.5">🚨 Owner Dispatch Live Tracking:</span>
+                                          <span className="leading-relaxed font-sans">{ord.trackingInfo}</span>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               );
                             })}
@@ -3516,9 +3630,15 @@ export default function App() {
                                   ))}
                                 </div>
                                 <div className="flex justify-between items-center text-[10px] font-mono border-t border-emerald-950/35 pt-1.5 font-extrabold pb-1">
-                                  <span className="text-emerald-400/90 uppercase">{ord.orderType} ({ord.preferredPayment}) • {ord.status}</span>
+                                  <span className="text-emerald-400/90 uppercase">{ord.orderType} ({ord.preferredPayment}) • {ord.status.replace('_', ' ')}</span>
                                   <span className="text-white text-xs">Total: ${ord.grandTotal}.00</span>
                                 </div>
+
+                                {ord.trackingInfo && (
+                                  <div className="bg-amber-950/20 border border-amber-900/20 p-2 rounded-lg text-left mt-1 text-[8.5px] font-mono text-amber-200">
+                                    <span className="font-extrabold text-[#FF5C35]">Dispatch Note:</span> {ord.trackingInfo}
+                                  </div>
+                                )}
 
                                 {ord.status === 'completed' && (
                                   <div className="bg-[#030906] p-3 rounded-lg border border-emerald-900/20 mt-1 space-y-2">
