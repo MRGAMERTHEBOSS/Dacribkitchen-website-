@@ -1050,36 +1050,36 @@ export default function App() {
       doc.line(15, currentY, 195, currentY);
       currentY += 7;
       
-      // Right-aligned calculations block
+      // Right-aligned calculations block (with safe left-aligned starts preventing overlaps)
       doc.setFont("Helvetica", "normal");
       doc.setFontSize(10);
-      doc.text("Order Subtotal:", 135, currentY);
+      doc.text("Order Subtotal:", 115, currentY);
       doc.text(`$${subtotal}.00`, 175, currentY, { align: "right" });
       currentY += 5.5;
       
       if (appliedDiscount > 0) {
         doc.setTextColor(200, 50, 50);
-        doc.text(`Coupon Discount (${rewardCode}):`, 135, currentY);
+        doc.text(`Coupon Discount (${rewardCode}):`, 115, currentY);
         doc.text(`-$${appliedDiscount}.00`, 175, currentY, { align: "right" });
         doc.setTextColor(55, 55, 55);
         currentY += 5.5;
       }
       
       if (orderType === 'delivery') {
-        doc.text("Philly Delivery Fee:", 135, currentY);
+        doc.text("Philly Delivery Fee:", 115, currentY);
         doc.text("$6.00", 175, currentY, { align: "right" });
         currentY += 5.5;
       }
       
       doc.setLineWidth(0.5);
       doc.setDrawColor(11, 34, 23);
-      doc.line(135, currentY, 195, currentY);
+      doc.line(115, currentY, 175, currentY);
       currentY += 7;
       
       doc.setFont("Helvetica", "bold");
       doc.setFontSize(11);
       doc.setTextColor(11, 34, 23);
-      doc.text("GRAND BILL SUM:", 135, currentY);
+      doc.text("GRAND BILL:", 115, currentY);
       doc.text(`$${grandTotal}.00`, 175, currentY, { align: "right" });
       
       currentY += 16;
