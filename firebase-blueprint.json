@@ -1,0 +1,47 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile with email and role",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique user ID matching request.auth.uid" },
+        "email": { "type": "string", "format": "email", "description": "User's email" },
+        "displayName": { "type": "string", "description": "User's public name" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the user registered" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "When the profile was last updated" }
+      },
+      "required": ["uid", "email", "createdAt", "updatedAt"]
+    },
+    "Order": {
+      "title": "Order Placed",
+      "description": "Information about an order structured under user accounts",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The unique ID of the user who placed this order" },
+        "customerName": { "type": "string", "description": "The customer's name" },
+        "items": { "type": "array", "description": "List of items in the order" },
+        "subtotal": { "type": "number", "description": "Subtotal amount before fees" },
+        "deliveryFee": { "type": "number", "description": "Delivery fee applied" },
+        "grandTotal": { "type": "number", "description": "Final price paid or to-be-paid" },
+        "orderType": { "type": "string", "enum": ["pickup", "delivery"], "description": "Pickup or delivery choice" },
+        "scheduledTime": { "type": "string", "description": "Timing preference: asap or scheduled-time" },
+        "preferredPayment": { "type": "string", "description": "Selected billing option" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"], "description": "Current state of the kitchen order" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Order creation date-time" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last time order status updated" }
+      },
+      "required": ["userId", "customerName", "subtotal", "deliveryFee", "grandTotal", "orderType", "status", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User records containing account metadata"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Customer order invoices with state"
+    }
+  }
+}

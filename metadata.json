@@ -1,0 +1,8 @@
+{
+  "name": "Remix: DaCrib Kitchen Digital Ordering",
+  "description": "A sleek, modern digital ordering platform for DaCrib Kitchen featuring interactive soul food menus and urban dark aesthetics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
