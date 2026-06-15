@@ -110,8 +110,10 @@ const getLocalUsers = (): UserProfile[] => {
 
 const saveLocalUser = (user: UserProfile) => {
   const users = getLocalUsers();
-  users.push(user);
-  localStorage.setItem('dacrib_local_users', JSON.stringify(users));
+  // Avoid duplicate entries
+  const filtered = users.filter(u => u.uid !== user.uid);
+  filtered.push(user);
+  localStorage.setItem('dacrib_local_users', JSON.stringify(filtered));
 };
 
 // Helper for local orders
@@ -124,8 +126,9 @@ export const getLocalOrders = (userId: string): PastOrder[] => {
 export const saveLocalOrder = (order: PastOrder) => {
   const data = localStorage.getItem('dacrib_local_orders');
   const allOrders: PastOrder[] = data ? JSON.parse(data) : [];
-  allOrders.push(order);
-  localStorage.setItem('dacrib_local_orders', JSON.stringify(allOrders));
+  const filtered = allOrders.filter(o => o.orderId !== order.orderId);
+  filtered.push(order);
+  localStorage.setItem('dacrib_local_orders', JSON.stringify(filtered));
 };
 
 // Unified registration function
@@ -141,13 +144,19 @@ export async function registerProfile(email: string, displayName: string, uid: s
     const path = `users/${uid}`;
     try {
       await setDoc(doc(db, 'users', uid), profile);
+      saveLocalUser(profile);
       return profile;
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, path);
+    } catch (err: any) {
+      console.warn("Firestore registration failed, using localStorage fallback:", err);
+      const errStr = err instanceof Error ? err.message : String(err);
+      const isPermissionErr = errStr.toLowerCase().includes('permission') || err.code === 'permission-denied';
+      if (isPermissionErr) {
+        handleFirestoreError(err, OperationType.WRITE, path);
+      }
     }
   }
 
-  // Local storage fallback fallback
+  // Local storage fallback
   saveLocalUser(profile);
   return profile;
 }
@@ -159,10 +168,17 @@ export async function getUserProfile(uid: string, defaultEmail: string): Promise
     try {
       const snap = await getDoc(doc(db, 'users', uid));
       if (snap.exists()) {
-        return snap.data() as UserProfile;
+        const uProfile = snap.data() as UserProfile;
+        saveLocalUser(uProfile);
+        return uProfile;
       }
-    } catch (err) {
-      handleFirestoreError(err, OperationType.GET, path);
+    } catch (err: any) {
+      console.warn("Firestore getUserProfile failed, checking localStorage fallback:", err);
+      const errStr = err instanceof Error ? err.message : String(err);
+      const isPermissionErr = errStr.toLowerCase().includes('permission') || err.code === 'permission-denied';
+      if (isPermissionErr) {
+        handleFirestoreError(err, OperationType.GET, path);
+      }
     }
   }
 
@@ -197,9 +213,13 @@ export async function fetchUserOrders(userId: string): Promise<PastOrder[]> {
         orders.push({ orderId: d.id, ...d.data() } as PastOrder);
       });
       return orders;
-    } catch (err) {
-      // If it fails because of missing indexes or something, fallback to unindexed list or local
-      console.warn("Firestore fetch failed, checking local storage as fallback:", err);
+    } catch (err: any) {
+      console.warn("Firestore fetchUserOrders failed, checking localStorage fallback:", err);
+      const errStr = err instanceof Error ? err.message : String(err);
+      const isPermissionErr = errStr.toLowerCase().includes('permission') || err.code === 'permission-denied';
+      if (isPermissionErr) {
+        handleFirestoreError(err, OperationType.LIST, path);
+      }
     }
   }
 
@@ -216,9 +236,15 @@ export async function placeUserOrder(orderData: Omit<PastOrder, 'orderId'>): Pro
     const path = 'orders';
     try {
       await setDoc(doc(db, 'orders', orderId), finalOrder);
+      saveLocalOrder(finalOrder);
       return orderId;
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, path);
+    } catch (err: any) {
+      console.warn("Firestore placeUserOrder failed, using localStorage fallback:", err);
+      const errStr = err instanceof Error ? err.message : String(err);
+      const isPermissionErr = errStr.toLowerCase().includes('permission') || err.code === 'permission-denied';
+      if (isPermissionErr) {
+        handleFirestoreError(err, OperationType.WRITE, path);
+      }
     }
   }
 
@@ -242,8 +268,13 @@ export async function fetchAllOrders(): Promise<PastOrder[]> {
         orders.push({ orderId: d.id, ...d.data() } as PastOrder);
       });
       return orders;
-    } catch (err) {
-      console.warn("Firestore fetchAllOrders failed, checking local storage:", err);
+    } catch (err: any) {
+      console.warn("Firestore fetchAllOrders failed, using localStorage fallback:", err);
+      const errStr = err instanceof Error ? err.message : String(err);
+      const isPermissionErr = errStr.toLowerCase().includes('permission') || err.code === 'permission-denied';
+      if (isPermissionErr) {
+        handleFirestoreError(err, OperationType.LIST, path);
+      }
     }
   }
 
@@ -259,9 +290,20 @@ export async function updateOrderStatus(orderId: string, status: PastOrder['stat
     const path = `orders/${orderId}`;
     try {
       await setDoc(doc(db, 'orders', orderId), { status }, { merge: true });
+      
+      const data = localStorage.getItem('dacrib_local_orders');
+      let allOrders: PastOrder[] = data ? JSON.parse(data) : [];
+      allOrders = allOrders.map(o => o.orderId === orderId ? { ...o, status: status as any } : o);
+      localStorage.setItem('dacrib_local_orders', JSON.stringify(allOrders));
+      
       return;
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, path);
+    } catch (err: any) {
+      console.warn("Firestore updateOrderStatus failed, using localStorage fallback:", err);
+      const errStr = err instanceof Error ? err.message : String(err);
+      const isPermissionErr = errStr.toLowerCase().includes('permission') || err.code === 'permission-denied';
+      if (isPermissionErr) {
+        handleFirestoreError(err, OperationType.WRITE, path);
+      }
     }
   }
 
@@ -278,9 +320,20 @@ export async function submitOrderFeedback(orderId: string, rating: number, revie
     const path = `orders/${orderId}`;
     try {
       await setDoc(doc(db, 'orders', orderId), { rating, review }, { merge: true });
+      
+      const data = localStorage.getItem('dacrib_local_orders');
+      let allOrders: PastOrder[] = data ? JSON.parse(data) : [];
+      allOrders = allOrders.map(o => o.orderId === orderId ? { ...o, rating, review } : o);
+      localStorage.setItem('dacrib_local_orders', JSON.stringify(allOrders));
+      
       return;
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, path);
+    } catch (err: any) {
+      console.warn("Firestore submitOrderFeedback failed, using localStorage fallback:", err);
+      const errStr = err instanceof Error ? err.message : String(err);
+      const isPermissionErr = errStr.toLowerCase().includes('permission') || err.code === 'permission-denied';
+      if (isPermissionErr) {
+        handleFirestoreError(err, OperationType.WRITE, path);
+      }
     }
   }
 
