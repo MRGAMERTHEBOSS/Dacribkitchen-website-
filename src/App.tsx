@@ -40,6 +40,7 @@ import {
 import { CartItem, OrderType, PreferredPayment, OrderTimeType } from './types';
 import { entrees, alfredos, salads, wingFlavors, sides, premiumCombos, faqs } from './data';
 import { jsPDF } from 'jspdf';
+import logoImage from './IMG_2313.jpg';
 
 // Dual-mode authentication & history persistence import
 import {
@@ -1373,19 +1374,10 @@ export default function App() {
         {/* HEADER / NAVIGATION NAVBAR MATCHING THE SCREENSHOT */}
         <header className="px-6 md:px-10 py-5 flex items-center justify-between border-b border-emerald-950 bg-[#061510]/95 backdrop-blur sticky top-0 z-30 shadow-md">
           
-          {/* Custom SVG Logo: Heart plus fork/knife kitchen system */}
-          <div onClick={() => scrollTo('main-frame-root')} className="flex items-center space-x-2.5 cursor-pointer select-none">
-            <div className="w-10 h-10 rounded-2xl bg-[#FF5C35] flex items-center justify-center text-white shadow-md shadow-[#FF5C35]/20">
-              <svg viewBox="0 0 24 24" className="w-6 h-6 fill-none stroke-current stroke-2" strokeLinecap="round" strokeLinejoin="round">
-                {/* Heart-House base outline */}
-                <path d="M12 21C12 21 3 14 3 8.5C3 5.42 5.42 3 8.5 3C10.28 3 11.87 3.84 12 5.16 C12.13 3.84 13.72 3 15.5 3C18.58 3 21 5.42 21 8.5C21 14 12 21 12 21Z" fill="white" className="text-[#FF5C35]" />
-                {/* Fork icon */}
-                <path d="M10 7.5 L10 11.5" stroke="#FF5C35" strokeWidth="1.5" />
-                <path d="M9 7.5 L11 7.5 M9 8.5 L11 8.5" stroke="#FF5C35" strokeWidth="1" />
-                {/* Knife icon */}
-                <path d="M14 7.5 L14 12.5" stroke="#FF5C35" strokeWidth="1.5" />
-                <path d="M13.5 7.5 Q14.5 6.5 15.5 7.5" fill="none" stroke="#FF5C35" strokeWidth="1" />
-              </svg>
+          {/* Logo image next to the title */}
+          <div onClick={() => scrollTo('main-frame-root')} className="flex items-center space-x-3 cursor-pointer select-none">
+            <div className="w-12 h-12 rounded-2xl overflow-hidden bg-[#040E0A] shadow-md shadow-[#000000]/40 flex items-center justify-center">
+              <img src={logoImage} alt="DaCrib Kitchen logo" className="w-full h-full object-cover" />
             </div>
             <div>
               <span className="font-display font-black text-xl tracking-tight text-white uppercase block font-sans">
