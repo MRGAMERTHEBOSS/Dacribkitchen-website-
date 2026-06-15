@@ -2365,7 +2365,7 @@ export default function App() {
                       placeholder="Enter Pickup / Delivery Name"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
-                      className="w-full bg-neutral-900 border border-neutral-800 focus:border-[#FF5630] rounded-xl px-4 py-3 text-sm text-[orange] focus:outline-none placeholder:text-neutral-700 font-mono transition"
+                      className="w-full bg-neutral-900 border border-neutral-800 focus:border-[#FF5630] rounded-xl px-4 py-3 text-sm text-[#FF5C35] font-semibold focus:outline-none placeholder:text-neutral-500 font-mono transition"
                     />
                   </div>
 
@@ -2413,7 +2413,7 @@ export default function App() {
                         placeholder="Enter full address (e.g. 5200 Market St, apt 2B)"
                         value={deliveryAddress}
                         onChange={(e) => setDeliveryAddress(e.target.value)}
-                        className="w-full bg-neutral-900 border border-neutral-800 focus:border-[#FF5630] rounded-xl px-4 py-3 text-sm text-[orange] focus:outline-none placeholder:text-neutral-700 font-mono transition"
+                        className="w-full bg-neutral-900 border border-neutral-800 focus:border-[#FF5630] rounded-xl px-4 py-3 text-sm text-[#FF5C35] font-semibold focus:outline-none placeholder:text-neutral-500 font-mono transition"
                       />
                       <p className="text-[10px] text-[#FF5C35] font-mono font-medium flex items-center gap-1">
                         ⚠️ Pls make sure address is correct for delivery driver!
@@ -2503,7 +2503,7 @@ export default function App() {
                       value={specialNotes}
                       onChange={(e) => setSpecialNotes(e.target.value)}
                       rows={2}
-                      className="w-full bg-neutral-900 border border-neutral-800 focus:border-[#FF5630] rounded-xl px-3 py-2 text-xs text-neutral-300 focus:outline-none placeholder:text-neutral-700 font-mono resize-none"
+                      className="w-full bg-neutral-900 border border-neutral-800 focus:border-[#FF5630] rounded-xl px-3 py-2 text-xs text-neutral-300 focus:outline-none placeholder:text-neutral-500 font-mono resize-none"
                     />
                   </div>
 
@@ -2786,17 +2786,17 @@ export default function App() {
         </div>
 
         {/* RECENTLY ORDERED SECTION & INTERACTIVE AI GEMINI MATCH CAROUSEL */}
-        <div className="bg-white px-6 md:px-10 py-10 border-t border-gray-150" id="ai-recommender">
+        <div className="bg-[#030A07] px-6 md:px-10 py-10 border-t border-emerald-950/40" id="ai-recommender">
           
-          <div className="bg-neutral-50 border border-gray-150 rounded-2xl p-6 text-left relative overflow-hidden">
+          <div className="bg-[#061510]/80 border border-emerald-900/30 rounded-2xl p-6 text-left relative overflow-hidden">
             
             {/* Header with Dual Tabs */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-gray-200 mb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-emerald-950/40 mb-6">
               <div className="space-y-1">
                 <span className="text-[9px] uppercase font-mono bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded border border-emerald-800 tracking-wider font-extrabold select-none">
                   ⚡ INSTANT COMPASS RE-ENGINEERING
                 </span>
-                <h4 className="font-display font-black text-neutral-800 text-lg uppercase tracking-tight mt-1 flex items-center gap-1.5">
+                <h4 className="font-display font-black text-white text-lg uppercase tracking-tight mt-1 flex items-center gap-1.5">
                   <Compass className="w-5 h-5 text-[#FF5C35]" />
                   <span>Diner Taste Guidance Suite</span>
                 </h4>
@@ -2806,72 +2806,72 @@ export default function App() {
             <div className="space-y-6">
                 
                 {/* Information Callout */}
-                <div className="bg-[#122A1E]/15 border border-emerald-900/10 p-3.5 rounded-xl text-neutral-600 text-xs leading-relaxed max-w-4xl select-none">
-                  💡 <span className="font-bold text-emerald-800 font-sans">How it works:</span> Fill out your cravings and protein interests below, then tap our chef matcher. The system constructs a custom context query to **Google Gemini (gemini-3.5-flash)** server-side to design physical Philly platters matched specifically with custom soul-food explanations tuned for you!
+                <div className="bg-[#122A1E]/30 border border-emerald-850/40 p-3.5 rounded-xl text-emerald-200/90 text-xs leading-relaxed max-w-4xl select-none">
+                  💡 <span className="font-black text-[#FF5C35] font-sans">How it works:</span> Fill out your cravings and protein interests below, then tap our chef matcher. The system constructs a custom context query to **Google Gemini (gemini-3.5-flash)** server-side to design physical Philly platters matched specifically with custom soul-food explanations tuned for you!
                 </div>
 
                 {/* The Quiz Option Bento Selection Bar */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-neutral-100 p-4 rounded-xl border border-gray-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-[#030906] p-4 rounded-xl border border-emerald-950/60">
                   {/* Q1: Cravings */}
                   <div className="space-y-1.5">
-                    <label className="text-[9px] uppercase font-mono text-neutral-500 font-black tracking-wider block">1. Style Cravings</label>
+                    <label className="text-[9px] uppercase font-mono text-emerald-400 font-black tracking-wider block">1. Style Cravings</label>
                     <select
                       value={selectedCraving}
                       onChange={(e) => setSelectedCraving(e.target.value)}
-                      className="w-full bg-white border border-gray-250 text-neutral-800 font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5C35]"
+                      className="w-full bg-[#061510] border border-emerald-900/40 text-white font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5C35] cursor-pointer"
                     >
-                      <option value="creamy & velvety">Creamy & Velvet (Alfredo)</option>
-                      <option value="spicy & heavy">Cajun Searing Spices (Seafood)</option>
-                      <option value="smoky & savory">Smoky Honey Glazes (Platters)</option>
-                      <option value="fresh & lightweight">Crisp & Chilled (Salads & Pasta)</option>
+                      <option value="creamy & velvety" className="bg-[#061510] text-[#FF5C35]">Creamy & Velvet (Alfredo)</option>
+                      <option value="spicy & heavy" className="bg-[#061510] text-[#FF5C35]">Cajun Searing Spices (Seafood)</option>
+                      <option value="smoky & savory" className="bg-[#061510] text-[#FF5C35]">Smoky Honey Glazes (Platters)</option>
+                      <option value="fresh & lightweight" className="bg-[#061510] text-[#FF5C35]">Crisp & Chilled (Salads & Pasta)</option>
                     </select>
                   </div>
 
                   {/* Q2: Protein meat option */}
                   <div className="space-y-1.5">
-                    <label className="text-[9px] uppercase font-mono text-neutral-500 font-black tracking-wider block">2. Preferred Protein</label>
+                    <label className="text-[9px] uppercase font-mono text-emerald-400 font-black tracking-wider block">2. Preferred Protein</label>
                     <select
                       value={selectedProtein}
                       onChange={(e) => setSelectedProtein(e.target.value)}
-                      className="w-full bg-white border border-gray-250 text-neutral-800 font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5C35]"
+                      className="w-full bg-[#061510] border border-emerald-900/40 text-white font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5C35] cursor-pointer"
                     >
-                      <option value="any">Surprise Me (Any Meat/Fish)</option>
-                      <option value="lamb chops">Gourmet Lamb Chops</option>
-                      <option value="turkey wing">Slow-Cooked Turkey Wings</option>
-                      <option value="salmon">Cajun Blackened Salmon</option>
-                      <option value="steak">Sautéed Steak Bits</option>
-                      <option value="chicken">Scrumptious Chicken Breast</option>
-                      <option value="shrimp">Butter Sautéed Jumbo Shrimp</option>
-                      <option value="wings">Wing Ding Platter</option>
+                      <option value="any" className="bg-[#061510] text-[#FF5C35]">Surprise Me (Any Meat/Fish)</option>
+                      <option value="lamb chops" className="bg-[#061510] text-[#FF5C35]">Gourmet Lamb Chops</option>
+                      <option value="turkey wing" className="bg-[#061510] text-[#FF5C35]">Slow-Cooked Turkey Wings</option>
+                      <option value="salmon" className="bg-[#061510] text-[#FF5C35]">Cajun Blackened Salmon</option>
+                      <option value="steak" className="bg-[#061510] text-[#FF5C35]">Sautéed Steak Bits</option>
+                      <option value="chicken" className="bg-[#061510] text-[#FF5C35]">Scrumptious Chicken Breast</option>
+                      <option value="shrimp" className="bg-[#061510] text-[#FF5C35]">Butter Sautéed Jumbo Shrimp</option>
+                      <option value="wings" className="bg-[#061510] text-[#FF5C35]">Wing Ding Platter</option>
                     </select>
                   </div>
 
                   {/* Q3: Hunger Intake scale */}
                   <div className="space-y-1.5">
-                    <label className="text-[9px] uppercase font-mono text-neutral-500 font-black tracking-wider block">3. Hunger Intake Scale</label>
+                    <label className="text-[9px] uppercase font-mono text-emerald-400 font-black tracking-wider block">3. Hunger Intake Scale</label>
                     <select
                       value={selectedHunger}
                       onChange={(e) => setSelectedHunger(e.target.value)}
-                      className="w-full bg-white border border-gray-250 text-neutral-800 font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5C35]"
+                      className="w-full bg-[#061510] border border-emerald-900/40 text-white font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5C35] cursor-pointer"
                     >
-                      <option value="snack">Cozy Snack (Chilled Sides)</option>
-                      <option value="platter">Standard Soul Base Platter</option>
-                      <option value="feast">Monster Feast (Combos & Extra Helper)</option>
+                      <option value="snack" className="bg-[#061510] text-[#FF5C35]">Cozy Snack (Chilled Sides)</option>
+                      <option value="platter" className="bg-[#061510] text-[#FF5C35]">Standard Soul Base Platter</option>
+                      <option value="feast" className="bg-[#061510] text-[#FF5C35]">Monster Feast (Combos & Extra Helper)</option>
                     </select>
                   </div>
 
                   {/* Q4: Spice Level Flare */}
                   <div className="space-y-1.5">
-                    <label className="text-[9px] uppercase font-mono text-neutral-500 font-black tracking-wider block">4. Spice Flare Kick</label>
+                    <label className="text-[9px] uppercase font-mono text-emerald-400 font-black tracking-wider block">4. Spice Flare Kick</label>
                     <select
                       value={selectedSpice}
                       onChange={(e) => setSelectedSpice(e.target.value)}
-                      className="w-full bg-white border border-gray-250 text-neutral-800 font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5C35]"
+                      className="w-full bg-[#061510] border border-emerald-900/40 text-white font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5C35] cursor-pointer"
                     >
-                      <option value="none">None (Completely Sweet & Mild)</option>
-                      <option value="mild">Mild House Dusting</option>
-                      <option value="hot">Searing Honey Hot drizzle</option>
-                      <option value="volcano">Volcano Mango Habanero Infusion</option>
+                      <option value="none" className="bg-[#061510] text-[#FF5C35]">None (Completely Sweet & Mild)</option>
+                      <option value="mild" className="bg-[#061510] text-[#FF5C35]">Mild House Dusting</option>
+                      <option value="hot" className="bg-[#061510] text-[#FF5C35]">Searing Honey Hot drizzle</option>
+                      <option value="volcano" className="bg-[#061510] text-[#FF5C35]">Volcano Mango Habanero Infusion</option>
                     </select>
                   </div>
                 </div>
@@ -2884,7 +2884,7 @@ export default function App() {
                     type="button"
                     onClick={fetchGeminiRecommendations}
                     disabled={geminiLoading}
-                    className="py-3 px-8 bg-neutral-900 text-white rounded-xl font-display font-black text-xs uppercase tracking-widest hover:bg-[#FF5C35] hover:text-white transition shadow-md disabled:opacity-50 cursor-pointer flex items-center justify-center space-x-2"
+                    className="py-3 px-8 bg-[#FF5C35] hover:bg-[#E64117] text-white rounded-xl font-display font-black text-xs uppercase tracking-widest transition shadow-md disabled:opacity-50 cursor-pointer flex items-center justify-center space-x-2 shadow-lg"
                   >
                     <span>{geminiLoading ? '⚡ GRILLING CUSTOM MATCHES...' : '🔮 SCAN TASTE AND ENVISION PLATTER'}</span>
                     {!geminiLoading && <Sparkles className="w-4 h-4 text-amber-400" />}
@@ -2893,7 +2893,7 @@ export default function App() {
 
                 {/* Visual Error Message / Fallback warning */}
                 {geminiError && (
-                  <p className="text-[10px] text-orange-600 font-mono text-center select-all bg-orange-100/40 p-2 rounded-lg border border-orange-200 max-w-lg mx-auto">
+                  <p className="text-[10px] text-red-400 font-mono text-center select-all bg-red-950/20 p-2 rounded-lg border border-red-900/40 max-w-lg mx-auto">
                     ⚠️ {geminiError}
                   </p>
                 )}
@@ -2901,7 +2901,7 @@ export default function App() {
                 {/* THE RECOMMENDATIONS SLIDABLE CAROUSEL GRID */}
                 <div className="space-y-3 pt-2">
                   <div className="flex justify-between items-center select-none">
-                    <span className="text-[10px] uppercase font-mono text-emerald-800 font-black tracking-widest">
+                    <span className="text-[10px] uppercase font-mono text-emerald-400 font-black tracking-widest">
                       {geminiResults.length > 0 ? `🔥 CUSTOM CAROUSEL MATCHES (${geminiResults.length})` : '🔍 Your personalized AI recommended dishes will load here...'}
                     </span>
                     {geminiResults.length > 0 && (
@@ -2913,18 +2913,18 @@ export default function App() {
 
                   {geminiLoading ? (
                     /* Sizzple loader spinner */
-                    <div className="border border-dashed border-gray-250 bg-neutral-100 py-16 rounded-2xl flex flex-col items-center justify-center space-y-3">
+                    <div className="border border-dashed border-emerald-900 bg-[#030906] py-16 rounded-2xl flex flex-col items-center justify-center space-y-3">
                       <div className="w-10 h-10 border-4 border-emerald-900 border-t-[#FF5C35] rounded-full animate-spin" />
-                      <p className="text-xs font-mono text-neutral-500 uppercase tracking-widest animate-pulse">
+                      <p className="text-xs font-mono text-emerald-400/80 uppercase tracking-widest animate-pulse">
                         Asking Crib AI Chef... Boiling mac-and-cheese water...
                       </p>
                     </div>
                   ) : geminiResults.length === 0 ? (
                     /* Elegant placeholder card */
-                    <div className="border border-dashed border-gray-220 bg-neutral-100 py-12 rounded-2xl text-center flex flex-col items-center justify-center space-y-2 select-none">
+                    <div className="border border-dashed border-emerald-900 bg-[#030906] py-12 rounded-2xl text-center flex flex-col items-center justify-center space-y-2 select-none">
                       <span className="text-3xl">🍲</span>
-                      <h5 className="font-display font-bold text-neutral-600 uppercase text-xs">Awaiting Soul Combination</h5>
-                      <p className="text-[10px] font-mono text-neutral-500 max-w-sm">
+                      <h5 className="font-display font-bold text-white/80 uppercase text-xs">Awaiting Soul Combination</h5>
+                      <p className="text-[10px] font-mono text-emerald-400/70 max-w-sm">
                         Select your cravings and let the Gemini API analyze the kitchen stock to suggest standard or completely custom platters tailored precisely for you!
                       </p>
                     </div>
@@ -3011,41 +3011,43 @@ export default function App() {
       {/* 👑 VIP MEMBERS & AUTH DASHBOARD MODAL */}
       <AnimatePresence>
         {vipModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs overflow-hidden">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className={`bg-[#091511] border border-emerald-900 text-white rounded-3xl w-full shadow-2xl overflow-hidden relative flex flex-col justify-between transition-all duration-300 ${isOwnerUser ? 'max-w-3xl' : 'max-w-xl'}`}
+              className={`bg-[#091511] border border-emerald-900 text-white rounded-3xl w-full shadow-2xl overflow-hidden relative flex flex-col transition-all duration-300 max-h-[90vh] md:max-h-[85vh] ${isOwnerUser ? 'max-w-3xl' : 'max-w-xl'}`}
             >
               {/* Top tear ribbon */}
               <div className="h-2 w-full bg-[#FF5C35]" />
 
-              <div className="p-6 md:p-8 space-y-6">
-                
-                {/* Header with Exit trigger */}
-                <div className="flex justify-between items-center pb-4 border-b border-emerald-950/45">
-                  <div className="flex items-center space-x-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-[#FF5C35]/15 text-[#FF5C35] flex items-center justify-center font-bold">
-                      👑
-                    </div>
-                    <div>
-                      <h4 className="font-display font-black text-sm uppercase tracking-wider text-white">
-                        VIP Crib Members Hub
-                      </h4>
-                      <p className="text-[9.5px] font-mono text-emerald-400 uppercase tracking-widest">
-                        {isFirebaseMode ? '🔥 Connected to Cloud Firebase Auth' : '📂 Instant Guest Local Auth'}
-                      </p>
-                    </div>
+              {/* Header with Exit trigger - FIXED at the top */}
+              <div className="p-6 pb-4 border-b border-emerald-950/45 flex justify-between items-center bg-[#091511] shrink-0 z-10">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#FF5C35]/15 text-[#FF5C35] flex items-center justify-center font-bold">
+                    👑
                   </div>
-                  <button
-                    onClick={() => { setVipModalOpen(false); setAuthError(null); }}
-                    className="p-1.5 rounded-full bg-emerald-950/30 hover:bg-emerald-950 hover:text-[#FF5C35] text-emerald-400 transition cursor-pointer"
-                  >
-                    <X className="w-4.5 h-4.5" />
-                  </button>
+                  <div>
+                    <h4 className="font-display font-black text-sm uppercase tracking-wider text-white">
+                      VIP Crib Members Hub
+                    </h4>
+                    <p className="text-[9.5px] font-mono text-emerald-400 uppercase tracking-widest">
+                      {isFirebaseMode ? '🔥 Connected to Cloud Firebase Auth' : '📂 Instant Guest Local Auth'}
+                    </p>
+                  </div>
                 </div>
+                <button
+                  onClick={() => { setVipModalOpen(false); setAuthError(null); }}
+                  className="p-1.5 rounded-full bg-emerald-950/30 hover:bg-[#FF5C35] hover:text-white text-emerald-400 transition cursor-pointer"
+                  aria-label="Close Member Dashboard"
+                >
+                  <X className="w-4.5 h-4.5" />
+                </button>
+              </div>
 
+              {/* Scrollable Main Content Area */}
+              <div className="p-6 md:p-8 pt-4 md:pt-4 space-y-6 overflow-y-auto flex-1 max-h-[calc(90vh-100px)] md:max-h-[calc(85vh-100px)]">
+                
                 {/* Main Content Pane */}
                 {currentUser ? (
                   isOwnerUser ? (
@@ -3577,7 +3579,7 @@ export default function App() {
                                             placeholder="Comment (e.g. Yams were phenomenal!)"
                                             value={feedbackReview[ord.orderId] || ""}
                                             onChange={(e) => setFeedbackReview(prev => ({ ...prev, [ord.orderId]: e.target.value }))}
-                                            className="flex-1 bg-[#050E0A] border border-emerald-950 text-[10px] px-2.5 py-1.5 rounded-lg font-mono text-white focus:outline-none focus:border-amber-500 placeholder:text-neutral-700"
+                                            className="flex-1 bg-[#030906] border border-emerald-900/60 text-[10px] px-2.5 py-1.5 rounded-lg font-mono text-white focus:outline-none focus:border-amber-500 placeholder:text-emerald-600/65"
                                           />
                                           <button
                                             type="button"
@@ -3615,7 +3617,7 @@ export default function App() {
                         placeholder="you@email.com"
                         value={authEmail}
                         onChange={(e) => setAuthEmail(e.target.value)}
-                        className="w-full bg-[#050E0A] border border-emerald-950 focus:border-[#FF5630] rounded-xl px-4 py-3 text-sm text-[orange] focus:outline-none placeholder:text-emerald-950/20 font-mono transition"
+                        className="w-full bg-[#030906] border border-emerald-800 focus:border-[#FF5630] rounded-xl px-4 py-3 text-sm text-amber-400 focus:outline-none placeholder:text-emerald-600/70 font-mono transition"
                       />
                     </div>
 
@@ -3630,7 +3632,7 @@ export default function App() {
                           placeholder="Your Name"
                           value={authName}
                           onChange={(e) => setAuthName(e.target.value)}
-                          className="w-full bg-[#050E0A] border border-emerald-950 focus:border-[#FF5630] rounded-xl px-4 py-3 text-sm text-[orange] focus:outline-none placeholder:text-emerald-950/20 font-mono transition"
+                          className="w-full bg-[#030906] border border-emerald-800 focus:border-[#FF5630] rounded-xl px-4 py-3 text-sm text-amber-400 focus:outline-none placeholder:text-emerald-600/70 font-mono transition"
                         />
                       </div>
                     )}
@@ -3645,7 +3647,7 @@ export default function App() {
                         placeholder="••••••••"
                         value={authPassword}
                         onChange={(e) => setAuthPassword(e.target.value)}
-                        className="w-full bg-[#050E0A] border border-emerald-950 focus:border-[#FF5630] rounded-xl px-4 py-3 text-sm text-[orange] focus:outline-none placeholder:text-emerald-950/20 font-mono transition"
+                        className="w-full bg-[#030906] border border-emerald-800 focus:border-[#FF5630] rounded-xl px-4 py-3 text-sm text-amber-400 focus:outline-none placeholder:text-emerald-600/70 font-mono transition"
                       />
                     </div>
 
