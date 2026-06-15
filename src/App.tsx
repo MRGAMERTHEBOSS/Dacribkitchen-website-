@@ -41,6 +41,7 @@ import { CartItem, OrderType, PreferredPayment, OrderTimeType } from './types';
 import { entrees, alfredos, salads, wingFlavors, sides, premiumCombos, faqs } from './data';
 import { jsPDF } from 'jspdf';
 import logoImage from './Untitled design (2).png';
+import lambChopsImage from './Lamb Chops Platter.jpg';
 import confetti from 'canvas-confetti';
 
 // Dual-mode authentication & history persistence import
@@ -534,88 +535,14 @@ export default function App() {
   }, [deliveryAddress]);
 
   // --- FOOD ILLUSTRATIONS FOR DETAILED VISUAL PRESENTATION ---
+  // Use the uploaded JPG for the Lamb Chops illustration so all places that
+  // render `HoneyGarlicLambChopsIllustration` will display the real photo.
   const HoneyGarlicLambChopsIllustration = () => (
-    <svg viewBox="0 0 200 200" className="w-full h-full select-none">
-      {/* Wooden shadow board base */}
-      <circle cx="100" cy="100" r="85" fill="#f8eedc" opacity="0.3" filter="blur(4px)" />
-      {/* Terracotta custom dish plate */}
-      <circle cx="100" cy="100" r="76" fill="#fcf9f2" stroke="#e3dcd3" strokeWidth="2" />
-      <circle cx="100" cy="100" r="62" fill="#faf5eb" stroke="#ece3d5" strokeWidth="1" />
-      
-      {/* Golden Honey drizzle rings */}
-      <circle cx="100" cy="100" r="45" fill="none" stroke="#FFB300" strokeWidth="1.5" strokeDasharray="10 15" opacity="0.6" />
-      <circle cx="100" cy="100" r="32" fill="none" stroke="#ff9100" strokeWidth="1" strokeDasharray="5 10" opacity="0.4" />
-      
-      {/* 4 Grilled Lamb Chops elegantly crossed */}
-      {/* Chop 1 */}
-      <g transform="rotate(35 100 100)">
-        <path d="M45,100 C45,85 70,80 90,95 C100,102 120,85 145,80 C150,79 155,83 155,88 C155,93 140,110 120,105 C95,98 85,115 45,100 Z" fill="#4E2312" opacity="0.95" />
-        <path d="M48,99 C55,90 70,88 84,97" stroke="#2B1309" strokeWidth="4.5" strokeLinecap="round" />
-        {/* Bone */}
-        <path d="M120,103 L152,82" stroke="#ece0d1" strokeWidth="5" strokeLinecap="round" />
-        <path d="M150,83 C153,80 156,84 152,85" fill="#ece0d1" />
-        {/* Sear mark details */}
-        <line x1="60" y1="92" x2="68" y2="100" stroke="#1f0a03" strokeWidth="2.5" />
-        <line x1="70" y1="94" x2="78" y2="102" stroke="#1f0a03" strokeWidth="2.5" />
-      </g>
-      
-      {/* Chop 2 */}
-      <g transform="rotate(130 100 100)">
-        <path d="M45,100 C45,85 70,80 90,95 C100,102 120,85 145,80 C150,79 155,83 155,88 C155,93 140,110 120,105 C95,98 85,115 45,100 Z" fill="#3D1A0C" />
-        <path d="M48,99 C55,90 70,88 84,97" stroke="#230E05" strokeWidth="4.5" strokeLinecap="round" />
-        <path d="M120,103 L152,82" stroke="#f4eae1" strokeWidth="5" strokeLinecap="round" />
-        <line x1="60" y1="92" x2="68" y2="100" stroke="#1c0701" strokeWidth="2.5" />
-        <line x1="70" y1="94" x2="78" y2="102" stroke="#1c0701" strokeWidth="2.5" />
-      </g>
-
-      {/* Chop 3 */}
-      <g transform="rotate(220 100 100)">
-        <path d="M45,100 C45,85 70,80 90,95 C100,102 120,85 145,80 C150,79 155,83 155,88 C155,93 140,110 120,105 C95,98 85,115 45,100 Z" fill="#421D0E" />
-        <path d="M48,99 C55,90 70,88 84,97" stroke="#251006" strokeWidth="4.5" strokeLinecap="round" />
-        <path d="M120,103 L152,82" stroke="#f4eae1" strokeWidth="5" strokeLinecap="round" />
-        <line x1="60" y1="92" x2="68" y2="100" stroke="#1f0a03" strokeWidth="2.5" />
-      </g>
-
-      {/* Chop 4 (On top) */}
-      <g transform="rotate(300 100 100)">
-        {/* Shadow */}
-        <path d="M45,103 C45,88 70,83 90,98 L145,83 Q150,83 147,90 L120,108 Z" fill="rgba(0,0,0,0.15)" filter="blur(2px)" />
-        <path d="M45,100 C45,85 70,80 90,95 C100,102 120,85 145,80 C150,79 155,83 155,88 C155,93 140,110 120,105 C95,98 85,115 45,100 Z" fill="#5A2C18" />
-        <path d="M48,99 C55,90 70,88 84,97" stroke="#311508" strokeWidth="4.5" strokeLinecap="round" />
-        <path d="M120,103 L152,82" stroke="#fffcf9" strokeWidth="5" strokeLinecap="round" />
-        <line x1="60" y1="92" x2="68" y2="100" stroke="#1d0902" strokeWidth="2.5" />
-        <line x1="70" y1="94" x2="78" y2="102" stroke="#1d0902" strokeWidth="2.5" />
-      </g>
-
-      {/* Glossy Yellow Honey glaze coating */}
-      <ellipse cx="92" cy="98" rx="28" ry="16" fill="url(#honeyGrad)" opacity="0.65" filter="blur(1px)" />
-
-      {/* Green garnish flakes (chopped rosemary/cilantro) */}
-      <circle cx="85" cy="85" r="1.5" fill="#33691E" />
-      <circle cx="112" cy="115" r="2" fill="#2E7D32" />
-      <circle cx="95" cy="120" r="1.2" fill="#558B2F" />
-      <circle cx="115" cy="90" r="1.8" fill="#33691E" />
-      <circle cx="75" cy="110" r="2" fill="#1B5E20" />
-      <path d="M110,80 Q112,74 116,76" stroke="#2E7D32" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-      <path d="M78,118 Q82,122 80,126" stroke="#1B5E20" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-
-      {/* Two golden roasted lemon wedges on the side */}
-      <g transform="translate(118, 118) rotate(-20)">
-        <path d="M0,0 C12,-20 30,-10 24,12 Z" fill="#FBC02D" stroke="#F57F17" strokeWidth="1" />
-        <path d="M2,-2 C10,-16 26,-8 21,9 Z" fill="#FFF59D" />
-        <circle cx="10" cy="0" r="1" fill="#FBC02D" />
-      </g>
-
-      {/* Gradients definitions */}
-      <defs>
-        <radialGradient id="honeyGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#FFA000" stopOpacity="0.8" />
-          <stop offset="60%" stopColor="#FF6F00" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="#FF6F00" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-    </svg>
+    <div className="w-full h-full select-none flex items-center justify-center overflow-hidden">
+      <img src={lambChopsImage} alt="Honey Garlic Lamb Chops" className="w-full h-full object-cover rounded-lg" />
+    </div>
   );
+  
 
   const TurkeyWingsIllustration = () => (
     <svg viewBox="0 0 200 200" className="w-full h-full select-none">
