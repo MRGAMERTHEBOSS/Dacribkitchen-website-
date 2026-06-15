@@ -1,14 +1,39 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, User as FirebaseUser, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, orderBy,addDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, orderBy, addDoc } from 'firebase/firestore';
 import firebaseConfig from './firebase-applet-config.json';
 
+const placeholderPatterns = [
+  'placeholder',
+  'remixed',
+  'your-api-key',
+  'your-project-id',
+  'your-app-id',
+  'your-auth-domain',
+  'your-storage-bucket',
+  'your-messaging-sender-id',
+  'your-measurement-id',
+  'example',
+  'demo',
+  'changeme',
+];
+
+function isPlaceholderValue(value: string | undefined) {
+  if (!value) return true;
+  const normalized = value.toLowerCase().trim();
+  return placeholderPatterns.some((pattern) => normalized.includes(pattern));
+}
+
 // Detect if Firebase setup has been completed with valid keys
-export const isFirebaseMode = 
-  firebaseConfig.apiKey && 
-  !firebaseConfig.apiKey.includes('placeholder') && 
-  firebaseConfig.projectId && 
-  !firebaseConfig.projectId.includes('placeholder');
+export const isFirebaseMode =
+  !!firebaseConfig.apiKey &&
+  !!firebaseConfig.projectId &&
+  !!firebaseConfig.appId &&
+  !!firebaseConfig.authDomain &&
+  !isPlaceholderValue(firebaseConfig.apiKey) &&
+  !isPlaceholderValue(firebaseConfig.projectId) &&
+  !isPlaceholderValue(firebaseConfig.appId) &&
+  !isPlaceholderValue(firebaseConfig.authDomain);
 
 let app;
 let db: any = null;
