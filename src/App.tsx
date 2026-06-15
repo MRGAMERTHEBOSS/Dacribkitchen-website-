@@ -40,7 +40,7 @@ import {
 import { CartItem, OrderType, PreferredPayment, OrderTimeType } from './types';
 import { entrees, alfredos, salads, wingFlavors, sides, premiumCombos, faqs } from './data';
 import { jsPDF } from 'jspdf';
-import logoImage from './IMG_2313.jpg';
+import logoImage from './Untitled design (2).png';
 import confetti from 'canvas-confetti';
 
 // Dual-mode authentication & history persistence import
@@ -1447,7 +1447,7 @@ export default function App() {
           
           {/* Logo image next to the title */}
           <div onClick={() => scrollTo('main-frame-root')} className="flex items-center space-x-3 cursor-pointer select-none">
-            <img src={logoImage} alt="DaCrib Kitchen logo" className="w-16 h-16 rounded-2xl object-cover" />
+            <img src={logoImage} alt="DaCrib Kitchen logo" className="w-18 h-18 rounded-2xl object-cover" />
             <div>
               <span className="font-display font-black text-xl tracking-tight text-white uppercase block font-sans">
                 DACRIB <span className="text-[#FF5C35]">KITCHEN</span>
