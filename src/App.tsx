@@ -53,7 +53,8 @@ import {
   placeUserOrder,
   fetchAllOrders,
   updateOrderStatus,
-  submitOrderFeedback
+  submitOrderFeedback,
+  signInWithGoogle
 } from './firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 
@@ -268,7 +269,49 @@ export default function App() {
       }
     } catch (err: any) {
       console.error(err);
-      setAuthError(err.message || "Authentication attempt failed. Please check credentials.");
+      let friendlyMessage = err.message || "Authentication attempt failed. Please check credentials.";
+      const errorCode = err.code || "";
+      
+      if (errorCode === 'auth/invalid-credential' || (err.message && err.message.includes('auth/invalid-credential'))) {
+        friendlyMessage = "Incorrect email or password. If you are a new VIP member, please tap the 'Create an account' link below to register first!";
+      } else if (errorCode === 'auth/email-already-in-use' || (err.message && err.message.includes('auth/email-already-in-use'))) {
+        friendlyMessage = "This email is already registered as a VIP Member account. Please sign in or use a different email.";
+      } else if (errorCode === 'auth/wrong-password' || (err.message && err.message.includes('auth/wrong-password'))) {
+        friendlyMessage = "Incorrect password. Please try again or create an account.";
+      } else if (errorCode === 'auth/user-not-found' || (err.message && err.message.includes('auth/user-not-found'))) {
+        friendlyMessage = "No custom account found with this email. Please tap 'Create an account' below to register!";
+      } else if (errorCode === 'auth/weak-password' || (err.message && err.message.includes('auth/weak-password'))) {
+        friendlyMessage = "Safety check: Your password must be at least 6 characters long.";
+      } else if (errorCode === 'auth/invalid-email' || (err.message && err.message.includes('auth/invalid-email'))) {
+        friendlyMessage = "Please use a valid email address format (e.g., yourname@email.com).";
+      } else if (err.message && err.message.includes('Firebase:')) {
+        friendlyMessage = err.message.replace('Firebase:', '').replace('Error', '').replace(/\(auth\/[^)]+\)/g, '').replace(/\./g, '').trim() + ".";
+      }
+      
+      setAuthError(friendlyMessage);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setAuthError(null);
+      const profile = await signInWithGoogle();
+      setCurrentUser(profile);
+      localStorage.setItem('dacrib_currentUserProfile', JSON.stringify(profile));
+      setCustomerName(profile.displayName);
+      loadOrders(profile.uid);
+      setSuccessToast("Welcome back to the Crib! 🍖 Logged in via Google.");
+      setTimeout(() => setSuccessToast(null), 3500);
+      setVipModalOpen(false);
+    } catch (err: any) {
+      console.error(err);
+      let friendlyMessage = err.message || "Google Single Sign-On failed.";
+      if (err.code === 'auth/popup-blocked') {
+        friendlyMessage = "Pop-up blocked by the browser. Please tap to enable popups or use standard email login!";
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        friendlyMessage = "Google Sign-In canceled by closing the popup.";
+      }
+      setAuthError(friendlyMessage);
     }
   };
 
@@ -315,6 +358,10 @@ export default function App() {
 
   const [specialNotes, setSpecialNotes] = useState<string>(() => {
     return localStorage.getItem('dacrib_specialNotes') || '';
+  });
+
+  const [deliveryAddress, setDeliveryAddress] = useState<string>(() => {
+    return localStorage.getItem('dacrib_deliveryAddress') || '';
   });
 
   // --- GOOGLE GEMINI AI REC & LOYALTY STATE SUITE ---
@@ -429,6 +476,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('dacrib_specialNotes', specialNotes);
   }, [specialNotes]);
+
+  useEffect(() => {
+    localStorage.setItem('dacrib_deliveryAddress', deliveryAddress);
+  }, [deliveryAddress]);
 
   // --- FOOD ILLUSTRATIONS FOR DETAILED VISUAL PRESENTATION ---
   const HoneyGarlicLambChopsIllustration = () => (
@@ -1166,7 +1217,11 @@ export default function App() {
     let text = `🔥 DACRIB KITCHEN ORDER 🔥\n${divider}\n`;
     text += `👤 CUSTOMER: ${customerName || 'Pending'}\n`;
     text += `🕒 TIMING: ${orderTimeType === 'asap' ? 'ASAP (Immediate 15-25 min Prep)' : `Scheduled for ${scheduledTime}`}\n`;
-    text += `📍 SERVICE: ${orderType.toUpperCase() === 'DELIVERY' ? 'DELIVERY ($6 fee)\n   ⚠️ Pls make sure address is correct for delivery driver' : 'PICKUP'}\n`;
+    if (orderType === 'delivery') {
+      text += `📍 SERVICE: DELIVERY ($6 fee)\n🏠 ADDRESS: ${deliveryAddress || 'Pending Address Entry'}\n⚠️ Pls make sure address is correct for delivery driver\n`;
+    } else {
+      text += `📍 SERVICE: PICKUP\n`;
+    }
     text += `💳 PAYMENT: ${preferredPayment}\n`;
     text += `${divider}\n`;
 
@@ -1210,6 +1265,10 @@ export default function App() {
       alert("Please specify your Customer Name inside the digital invoice form below!");
       return;
     }
+    if (orderType === 'delivery' && !deliveryAddress.trim()) {
+      alert("Please specify your Delivery Street Address in the checkout form!");
+      return;
+    }
 
     // Save order in history database or local storage
     const orderRecord = {
@@ -1230,7 +1289,9 @@ export default function App() {
       scheduledTime: orderTimeType === 'asap' ? 'ASAP' : scheduledTime,
       preferredPayment,
       status: 'pending' as const,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      ...(orderType === 'delivery' ? { deliveryAddress: deliveryAddress.trim() } : {}),
+      specialNotes: specialNotes.trim()
     };
 
     placeUserOrder(orderRecord).then((newOrderId) => {
@@ -1777,10 +1838,7 @@ export default function App() {
             >
               {[
                 { id: 'all', label: 'Full Menu' },
-                { id: 'combos', label: 'Crib Combos 👑' },
-                { id: 'entrees', label: 'Platter Entrees' },
-                { id: 'alfredos', label: 'Velvety Alfredo' },
-                { id: 'wings', label: 'Crispy Wings' },
+                { id: 'entrees', label: 'Soul Food Saturday 🍲' },
                 { id: 'sides', label: 'Staple Sides' },
                 { id: 'salads', label: 'Fresh Salads 🥗' }
               ].map((tab) => (
@@ -1812,7 +1870,7 @@ export default function App() {
             {/* DYNAMIC LIST GRIDS */}
 
             {/* SUB-SECTION: BUNDLED COMBOS */}
-            {(activeTab === 'all' || activeTab === 'combos') && (
+            {filteredCombos.length > 0 && (activeTab === 'all' || activeTab === 'combos') && (
               <div className="space-y-4 pt-2">
                 <div className="flex items-center space-x-2">
                   <span className="w-1.5 h-5 bg-[#FF5C35] rounded" />
@@ -1944,7 +2002,7 @@ export default function App() {
             )}
 
             {/* SUB-SECTION: VELVETY ALFREDOS */}
-            {(activeTab === 'all' || activeTab === 'alfredos') && (
+            {filteredAlfredos.length > 0 && (activeTab === 'all' || activeTab === 'alfredos') && (
               <div className="space-y-4 pt-4">
                 <div className="flex items-center space-x-2">
                   <span className="w-1.5 h-5 bg-[#C62828] rounded" />
@@ -2009,7 +2067,7 @@ export default function App() {
             )}
 
             {/* SUB-SECTION: WINGS */}
-            {(activeTab === 'all' || activeTab === 'wings') && (
+            {wingFlavors.length > 0 && (activeTab === 'all' || activeTab === 'wings') && (
               <div className="space-y-4 pt-4">
                 <div className="flex items-center space-x-2">
                   <span className="w-1.5 h-5 bg-[#FF5C35] rounded" />
@@ -2343,6 +2401,28 @@ export default function App() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Delivery Address Capture box if Delivery selected */}
+                  {orderType === 'delivery' && (
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] uppercase font-mono text-neutral-400 tracking-widest font-black block mb-1">
+                        📍 DELIVERY STREET ADDRESS <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Enter full address (e.g. 5200 Market St, apt 2B)"
+                        value={deliveryAddress}
+                        onChange={(e) => setDeliveryAddress(e.target.value)}
+                        className="w-full bg-neutral-900 border border-neutral-800 focus:border-[#FF5630] rounded-xl px-4 py-3 text-sm text-[orange] focus:outline-none placeholder:text-neutral-700 font-mono transition"
+                      />
+                      <p className="text-[10px] text-[#FF5C35] font-mono font-medium flex items-center gap-1">
+                        ⚠️ Pls make sure address is correct for delivery driver!
+                      </p>
+                      <p className="text-[9px] text-neutral-500 font-sans italic">
+                        Active Delivery Range: West Philly, Southwest Philly, and South Philly.
+                      </p>
+                    </div>
+                  )}
 
                   {/* TIMING WINDOWS SCHEDULER MATCHING USER SPECIFICS */}
                   <div className="bg-neutral-950 p-3.5 rounded-xl border border-neutral-900 space-y-3">
@@ -3582,6 +3662,40 @@ export default function App() {
                       >
                         <Key className="w-4.5 h-4.5 text-white" />
                         <span>{isSignUp ? 'REGISTER VIP MEMBERSHIP' : 'SIGN IN SECURELY'}</span>
+                      </button>
+                    </div>
+
+                    <div className="flex items-center my-3 select-none">
+                      <div className="flex-1 border-t border-emerald-950/40"></div>
+                      <span className="px-3 text-[10px] text-emerald-400/50 font-mono">OR</span>
+                      <div className="flex-1 border-t border-emerald-950/40"></div>
+                    </div>
+
+                    <div>
+                      <button
+                        type="button"
+                        onClick={handleGoogleSignIn}
+                        className="w-full bg-white hover:bg-neutral-100 text-neutral-900 font-display font-bold uppercase tracking-wider text-xs py-3 rounded-xl flex items-center justify-center space-x-2 py-3 shadow-md cursor-pointer transition active:scale-98"
+                      >
+                        <svg className="w-4 h-4 mr-1.5" viewBox="0 0 24 24">
+                          <path
+                            fill="#EA4335"
+                            d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.61 14.99 1 12 1 7.35 1 3.37 3.65 1.39 7.5L5.1 10.4C5.97 7.21 8.93 5.04 12 5.04z"
+                          />
+                          <path
+                            fill="#4285F4"
+                            d="M23.49 12.27c0-.81-.07-1.59-.2-2.34H12v4.44h6.44c-.28 1.48-1.12 2.73-2.38 3.58l3.69 2.87c2.16-1.99 3.4-4.92 3.4-8.55z"
+                          />
+                          <path
+                            fill="#FBBC05"
+                            d="M5.1 13.6c-.24-.71-.38-1.48-.38-2.27s.14-1.56.38-2.27L1.39 6.16c-.8 1.59-1.25 3.38-1.25 5.27s.45 3.68 1.25 5.27l3.71-2.9z"
+                          />
+                          <path
+                            fill="#34A853"
+                            d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.69-2.87c-1.02.68-2.33 1.09-3.9 1.09-3.07 0-5.67-2.17-6.6-5.04l-3.71 2.9C3.37 20.35 7.35 23 12 23z"
+                          />
+                        </svg>
+                        <span>SIGN IN WITH GOOGLE</span>
                       </button>
                     </div>
 

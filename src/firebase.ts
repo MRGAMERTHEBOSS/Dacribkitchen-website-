@@ -1,39 +1,14 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, User as FirebaseUser, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, orderBy, addDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, orderBy,addDoc } from 'firebase/firestore';
 import firebaseConfig from './firebase-applet-config.json';
 
-const placeholderPatterns = [
-  'placeholder',
-  'remixed',
-  'your-api-key',
-  'your-project-id',
-  'your-app-id',
-  'your-auth-domain',
-  'your-storage-bucket',
-  'your-messaging-sender-id',
-  'your-measurement-id',
-  'example',
-  'demo',
-  'changeme',
-];
-
-function isPlaceholderValue(value: string | undefined) {
-  if (!value) return true;
-  const normalized = value.toLowerCase().trim();
-  return placeholderPatterns.some((pattern) => normalized.includes(pattern));
-}
-
 // Detect if Firebase setup has been completed with valid keys
-export const isFirebaseMode =
-  !!firebaseConfig.apiKey &&
-  !!firebaseConfig.projectId &&
-  !!firebaseConfig.appId &&
-  !!firebaseConfig.authDomain &&
-  !isPlaceholderValue(firebaseConfig.apiKey) &&
-  !isPlaceholderValue(firebaseConfig.projectId) &&
-  !isPlaceholderValue(firebaseConfig.appId) &&
-  !isPlaceholderValue(firebaseConfig.authDomain);
+export const isFirebaseMode = 
+  firebaseConfig.apiKey && 
+  !firebaseConfig.apiKey.includes('placeholder') && 
+  firebaseConfig.projectId && 
+  !firebaseConfig.projectId.includes('placeholder');
 
 let app;
 let db: any = null;
@@ -315,4 +290,46 @@ export async function submitOrderFeedback(orderId: string, rating: number, revie
   allOrders = allOrders.map(o => o.orderId === orderId ? { ...o, rating, review } : o);
   localStorage.setItem('dacrib_local_orders', JSON.stringify(allOrders));
 }
+
+// Google Sign-In helper with Firestore auto-sync and local fallback
+export async function signInWithGoogle(): Promise<UserProfile> {
+  if (isFirebaseMode && auth) {
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      const email = user.email || '';
+      const uid = user.uid;
+      const displayName = user.displayName || email.split('@')[0] || "VIP Member";
+      
+      // Retrieve or register profile
+      const profile = await getUserProfile(uid, email);
+      
+      // Update with Google display name if empty or default fallback
+      if (!profile.displayName || profile.displayName === email.split('@')[0]) {
+        profile.displayName = displayName;
+        await registerProfile(email, displayName, uid);
+      }
+      
+      return profile;
+    } catch (err: any) {
+      console.error("Google Sign-In Exception:", err);
+      throw err;
+    }
+  }
+
+  // Local fallback / mock Google mode
+  const localUid = 'google-mock-' + Math.floor(100000 + Math.random() * 900000);
+  const email = 'vipsoulfood@gmail.com';
+  const profile: UserProfile = {
+    uid: localUid,
+    email: email,
+    displayName: "Philly Soul VIP",
+    createdAt: new Date().toISOString()
+  };
+  saveLocalUser(profile);
+  return profile;
+}
+
 

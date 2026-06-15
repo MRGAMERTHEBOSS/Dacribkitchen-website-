@@ -47,7 +47,13 @@ service cloud.firestore {
         && data.grandTotal is number && data.grandTotal >= 0
         && data.orderType is string && (data.orderType == 'pickup' || data.orderType == 'delivery')
         && data.status is string && (data.status == 'pending' || data.status == 'confirmed' || data.status == 'cooking' || data.status == 'ready' || data.status == 'out_for_delivery' || data.status == 'completed' || data.status == 'cancelled')
-        && data.createdAt is string && data.createdAt.size() <= 128;
+        && data.createdAt is string && data.createdAt.size() <= 128
+        && (!('scheduledTime' in data) || (data.scheduledTime is string && data.scheduledTime.size() <= 128))
+        && (!('preferredPayment' in data) || (data.preferredPayment is string && data.preferredPayment.size() <= 128))
+        && (!('deliveryAddress' in data) || (data.deliveryAddress is string && data.deliveryAddress.size() <= 512))
+        && (!('specialNotes' in data) || (data.specialNotes is string && data.specialNotes.size() <= 1000))
+        && (!('rating' in data) || data.rating is number)
+        && (!('review' in data) || (data.review is string && data.review.size() <= 2000));
     }
 
     // RESTRICTED COLLECTION: USERS
@@ -63,7 +69,10 @@ service cloud.firestore {
       // Secure list query: client MUST include "where('userId', '==', uid)" filter unless system owner
       allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isSystemOwner());
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid && isValidOrder(request.resource.data);
-      allow update: if isSystemOwner() && isValidOrder(request.resource.data);
+      allow update: if (isSystemOwner() && isValidOrder(request.resource.data)) || (
+        isSignedIn() && resource.data.userId == request.auth.uid && isValidOrder(request.resource.data) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'review'])
+      );
       allow delete: if false;
     }
   }
