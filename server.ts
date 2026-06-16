@@ -1,4 +1,5 @@
 import express from "express";
+import dotenv from "dotenv";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
@@ -8,6 +9,9 @@ const app = express();
 const PORT = 3000;
 
 app.use(express.json());
+
+// Load local .env into process.env (makes development easier)
+dotenv.config();
 
 // API health check
 app.get("/api/health", (req, res) => {
