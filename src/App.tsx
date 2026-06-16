@@ -44,6 +44,7 @@ import logoImage from './Untitled design (2).png';
 import lambChopsImage from './Lamb Chops Platter.jpg';
 import confetti from 'canvas-confetti';
 import sauteedSteakImage from './Sautéed Steak.jpg';
+import blackenedSalmonImage from './Blackened Salmon Platter.jpg';
 
 // Dual-mode authentication & history persistence import
 import {
@@ -592,61 +593,9 @@ export default function App() {
   );
 
   const BlackenedSalmonIllustration = () => (
-    <svg viewBox="0 0 200 200" className="w-full h-full select-none">
-      <circle cx="100" cy="100" r="85" fill="#1b1c1e" opacity="0.15" filter="blur(4px)" />
-      {/* Textured Black Slate plate */}
-      <circle cx="100" cy="100" r="76" fill="#202124" stroke="#3c4043" strokeWidth="2" />
-      <circle cx="100" cy="100" r="72" fill="#18191c" />
-
-      {/* Yellow rice mound bed underneath */}
-      <g opacity="0.85">
-        <ellipse cx="100" cy="105" rx="46" ry="32" fill="#FBC02D" />
-        <ellipse cx="100" cy="105" rx="42" ry="28" fill="#FDD835" />
-        {/* Rice grains details */}
-        <ellipse cx="85" cy="98" rx="3" ry="1.2" fill="#FFEE58" transform="rotate(15 85 98)" />
-        <ellipse cx="115" cy="115" rx="2.5" ry="1" fill="#FFF59D" transform="rotate(-35 115 115)" />
-        <ellipse cx="100" cy="120" rx="3" ry="1.2" fill="#FFEE58" />
-        <ellipse cx="78" cy="110" rx="2.5" ry="1" fill="#FFF59D" />
-        <circle cx="122" cy="104" r="1.5" fill="#FFEE58" />
-      </g>
-
-      {/* Huge premium blackened salmon fillet seared perfect */}
-      <g transform="translate(68, 62) rotate(-15)">
-        {/* Fish body shadow */}
-        <rect x="-4" y="2" width="72" height="38" rx="8" fill="rgba(0,0,0,0.5)" filter="blur(2px)" />
-        {/* Seared cajun crust block */}
-        <rect x="0" y="0" width="68" height="34" rx="6" fill="#3E2723" stroke="#270F07" strokeWidth="1.5" />
-        {/* Salmon meat showing through cracks */}
-        <path d="M12,4 L12,30 C20,29 25,27 34,29 L34,5 C25,6 18,4 12,4 Z" fill="#E64A19" stroke="#BF360C" strokeWidth="1" />
-        <path d="M16,6 C22,12 28,10 32,7" stroke="#FF7043" strokeWidth="1.5" fill="none" />
-        <path d="M14,16 C20,22 26,20 30,17" stroke="#FF7043" strokeWidth="1.5" fill="none" />
-        <path d="M15,26 C22,30 26,28 31,25" stroke="#FF7043" strokeWidth="1.5" fill="none" opacity="0.9" />
-
-        {/* Charred blackened top marks */}
-        <path d="M0,0 L68,34" stroke="#1D0E0A" strokeWidth="3" strokeDasharray="8 6" />
-        <path d="M2,14 L60,34" stroke="#1D0E0A" strokeWidth="3.5" strokeDasharray="12 4" />
-        <path d="M12,-2 L50,22" stroke="#000000" strokeWidth="2.5" strokeDasharray="5 7" />
-
-        {/* Glossy butter glaze */}
-        <ellipse cx="34" cy="15" rx="18" ry="7" fill="rgba(255,193,7,0.3)" filter="blur(1px)" />
-      </g>
-
-      {/* Fresh cilantro leaves scattered */}
-      <g fill="#43A047">
-        <circle cx="95" cy="72" r="2.5" />
-        <circle cx="102" cy="70" r="2" />
-        <circle cx="75" cy="85" r="2.5" />
-        <circle cx="125" cy="115" r="2.2" />
-      </g>
-      
-      {/* Two rich red cherry tomatoes sautéed on the side */}
-      <circle cx="62" cy="118" r="8" fill="#D84315" />
-      <circle cx="59" cy="116" r="3.5" fill="#FF7043" opacity="0.8" />
-      <path d="M62,111 L60,113" stroke="#2E7D32" strokeWidth="1.5" />
-
-      <circle cx="140" cy="88" r="7.5" fill="#C62828" />
-      <circle cx="137" cy="86" r="3" fill="#EE5353" opacity="0.8" />
-    </svg>
+    <div className="w-full h-full select-none flex items-center justify-center overflow-hidden">
+      <img src={blackenedSalmonImage} alt="Blackened Salmon Platter" className="w-full h-full object-cover rounded-lg" />
+    </div>
   );
 
   const SautéedSteakAlfredoIllustration = () => (
