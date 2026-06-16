@@ -43,6 +43,7 @@ import { jsPDF } from 'jspdf';
 import logoImage from './Untitled design (2).png';
 import lambChopsImage from './Lamb Chops Platter.jpg';
 import confetti from 'canvas-confetti';
+import sauteedSteakImage from './Sautéed Steak.jpg';
 
 // Dual-mode authentication & history persistence import
 import {
@@ -649,53 +650,9 @@ export default function App() {
   );
 
   const SautéedSteakAlfredoIllustration = () => (
-    <svg viewBox="0 0 200 200" className="w-full h-full select-none">
-      <circle cx="100" cy="100" r="85" fill="#fcf6eb" opacity="0.2" filter="blur(3px)" />
-      {/* Off-white porcelain deep pasta bowl */}
-      <circle cx="100" cy="100" r="76" fill="#F8F9FA" stroke="#DEE2E6" strokeWidth="2" />
-      {/* Deep inside soup rim shadow */}
-      <circle cx="100" cy="100" r="64" fill="#fafafa" stroke="#E9ECEF" strokeWidth="3" />
-      
-      {/* Creamy rich parmesan white alfredo sauce layer */}
-      <circle cx="100" cy="100" r="54" fill="#FFFDE7" />
-
-      {/* Dynamic Swirling pasta noodles loops */}
-      <g stroke="#FFF9C4" strokeWidth="4.5" fill="none" strokeLinecap="round" opacity="0.95">
-        <path d="M72,100 C70,120 115,130 120,105 C124,80 80,72 85,100 C90,120 130,110 125,90" />
-        <path d="M85,85 C100,75 118,90 110,105 C102,120 80,110 92,95 C105,80 125,100 118,115" />
-        <path d="M90,120 C105,128 115,115 110,122" strokeWidth="3" />
-      </g>
-
-      {/* Seared juicy dark-golden steak cubes on top */}
-      <g fill="#4E342E" stroke="#2E1D1A" strokeWidth="1">
-        {/* Steak cube 1 */}
-        <rect x="75" y="85" width="16" height="15" rx="3" transform="rotate(10 83 92)" />
-        <line x1="77" y1="88" x2="84" y2="95" stroke="#1A0C09" strokeWidth="1.5" />
-        {/* Steak cube 2 */}
-        <rect x="105" y="88" width="18" height="16" rx="4" transform="rotate(-25 114 96)" />
-        <line x1="109" y1="91" x2="116" y2="98" stroke="#1A0C09" strokeWidth="1.5" />
-        {/* Steak cube 3 */}
-        <rect x="90" y="108" width="14" height="14" rx="3.5" transform="rotate(45 97 115)" />
-        {/* Steak cube 4 */}
-        <rect x="94" y="68" width="13" height="13" rx="3" transform="rotate(5 100 74)" />
-      </g>
-
-      {/* Glossy butter garlic pools & parsley dashes */}
-      <circle cx="82" cy="106" r="4" fill="#FBC02D" opacity="0.45" filter="blur(1px)" />
-      <circle cx="112" cy="80" r="3" fill="#FBC02D" opacity="0.3" filter="blur(1px)" />
-      
-      {/* Finely chopped Parsley seasoning */}
-      <g fill="#2E7D32" opacity="0.9">
-        <circle cx="85" cy="88" r="1.5" />
-        <circle cx="92" cy="98" r="1.8" />
-        <circle cx="110" cy="102" r="1.3" />
-        <circle cx="100" cy="113" r="1.6" />
-        <circle cx="108" cy="92" r="1.5" />
-        <circle cx="78" cy="95" r="1.2" />
-        <circle cx="98" cy="74" r="1.5" />
-        <circle cx="120" cy="90" r="1.4" />
-      </g>
-    </svg>
+    <div className="w-full h-full select-none flex items-center justify-center overflow-hidden">
+      <img src={sauteedSteakImage} alt="Sautéed Steak" className="w-full h-full object-cover rounded-lg" />
+    </div>
   );
 
   const PhillyKingPlatterIllustration = () => (
@@ -719,13 +676,8 @@ export default function App() {
 
       {/* Sector 3: Juicy Rib style Steak & 2 Lamb Chops crossed on top */}
       <g transform="translate(10, 10)">
-        {/* Sautéed steak pile */}
-        <path d="M85,45 C75,55 105,75 115,60 Z" fill="#4E342E" stroke="#37221E" />
-        <path d="M92,52 L106,64" stroke="#1d0a03" strokeWidth="2" />
-        {/* Top Lamb chop with white bone sticking out */}
-        <path d="M60,65 C55,50 82,45 100,60 C110,65 112,50 135,45 C138,45 140,50 135,53 C110,75 75,75 60,65 Z" fill="#5D2E1A" />
-        <line x1="110" y1="62" x2="134" y2="47" stroke="#ffffff" strokeWidth="4.5" strokeLinecap="round" />
-        <circle cx="78" cy="58" r="1" fill="#43A047" />
+        {/* Use uploaded Sautéed Steak photo for this sector */}
+        <image href={sauteedSteakImage} x="60" y="35" width="90" height="60" preserveAspectRatio="xMidYMid slice" />
       </g>
       
       {/* Parsley and pepper flakes dusting */}
