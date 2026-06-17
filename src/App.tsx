@@ -41,8 +41,9 @@ import { CartItem, OrderType, PreferredPayment, OrderTimeType } from './types';
 import { entrees, alfredos, salads, wingFlavors, sides, premiumCombos, faqs } from './data';
 import { jsPDF } from 'jspdf';
 import confetti from 'canvas-confetti';
-
-
+import sauteedSteakImage from './Sautéed Steak.jpg';
+import blackenedSalmonImage from './Blackened Salmon Platter.jpg';
+import turkeyWingsImage from './Turkey Wings.jpg';
 
 // Dual-mode authentication & history persistence import
 import {
@@ -623,49 +624,9 @@ export default function App() {
   );
 
   const TurkeyWingsIllustration = () => (
-    <svg viewBox="0 0 200 200" className="w-full h-full select-none">
-      <circle cx="100" cy="100" r="85" fill="#5d4037" opacity="0.15" filter="blur(4px)" />
-      {/* Heavy rustic ceramic platter */}
-      <circle cx="100" cy="100" r="76" fill="#fbe9e7" stroke="#ffccbc" strokeWidth="2" />
-      <circle cx="100" cy="100" r="62" fill="#fff3e0" stroke="#ffe0b2" strokeWidth="1" />
-      
-      {/* Golden gravy drizzle and base rice bed */}
-      <g opacity="0.75">
-        <ellipse cx="100" cy="102" rx="42" ry="26" fill="#FFF59D" />
-        <ellipse cx="100" cy="102" rx="36" ry="22" fill="#FFE082" />
-      </g>
-      
-      {/* 2 massive succulent slow-cooked Turkey Wings on platter */}
-      {/* Wing 1 */}
-      <g transform="rotate(-15 100 100) translate(15, 10)">
-        <path d="M45,85 C35,65 72,55 92,65 C102,70 125,58 140,64 C144,66 145,72 140,76 C124,88 84,95 45,85 Z" fill="#795548" stroke="#4e342e" strokeWidth="1.5" />
-        {/* Bone sticking out */}
-        <path d="M125,71 L145,66" stroke="#fffcf9" strokeWidth="4.5" strokeLinecap="round" />
-        {/* Crispy sear/gravy glaze accent */}
-        <ellipse cx="80" cy="74" rx="22" ry="8" fill="url(#gravyGrad)" opacity="0.8" />
-      </g>
-      
-      {/* Wing 2 (Laid across) */}
-      <g transform="rotate(35 100 100) translate(0, -5)">
-        <path d="M45,85 C35,65 72,55 92,65 C102,70 125,58 140,64 C144,66 145,72 140,76 C124,88 84,95 45,85 Z" fill="#8d6e63" stroke="#5d4037" strokeWidth="1.5" />
-        <path d="M125,71 L145,66" stroke="#fffcf9" strokeWidth="4.5" strokeLinecap="round" />
-        <ellipse cx="80" cy="74" rx="22" ry="8" fill="url(#gravyGrad)" opacity="0.7" />
-      </g>
-      
-      {/* Parsley and green pepper seasoning */}
-      <circle cx="82" cy="78" r="2" fill="#2E7D32" />
-      <circle cx="120" cy="112" r="1.5" fill="#388E3C" />
-      <circle cx="95" cy="118" r="2" fill="#1B5E20" />
-      <circle cx="110" cy="80" r="1.2" fill="#4CAF50" />
-      
-      <defs>
-        <radialGradient id="gravyGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#5d4037" stopOpacity="0.85" />
-          <stop offset="70%" stopColor="#8d6e63" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#e0f7fa" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-    </svg>
+    <div className="w-full h-full select-none flex items-center justify-center overflow-hidden">
+      <img src={turkeyWingsImage} alt="Turkey Wings" className="w-full h-full object-cover rounded-lg" />
+    </div>
   );
 
   const BlackenedSalmonIllustration = () => (
