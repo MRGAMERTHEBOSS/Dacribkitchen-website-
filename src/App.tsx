@@ -41,9 +41,11 @@ import { CartItem, OrderType, PreferredPayment, OrderTimeType } from './types';
 import { entrees, alfredos, salads, wingFlavors, sides, premiumCombos, faqs } from './data';
 import { jsPDF } from 'jspdf';
 import confetti from 'canvas-confetti';
+import lambChopsImage from './Lamb Chops Platter.JPG';
 import sauteedSteakImage from './Sautéed Steak.jpg';
 import blackenedSalmonImage from './Blackened Salmon Platter.jpg';
 import turkeyWingsImage from './Turkey Wings.jpg';
+import logoImage from './logo.png';
 
 // Dual-mode authentication & history persistence import
 import {
@@ -541,86 +543,9 @@ export default function App() {
 
   // --- FOOD ILLUSTRATIONS FOR DETAILED VISUAL PRESENTATION ---
   const HoneyGarlicLambChopsIllustration = () => (
-    <svg viewBox="0 0 200 200" className="w-full h-full select-none">
-      {/* Wooden shadow board base */}
-      <circle cx="100" cy="100" r="85" fill="#f8eedc" opacity="0.3" filter="blur(4px)" />
-      {/* Terracotta custom dish plate */}
-      <circle cx="100" cy="100" r="76" fill="#fcf9f2" stroke="#e3dcd3" strokeWidth="2" />
-      <circle cx="100" cy="100" r="62" fill="#faf5eb" stroke="#ece3d5" strokeWidth="1" />
-      
-      {/* Golden Honey drizzle rings */}
-      <circle cx="100" cy="100" r="45" fill="none" stroke="#FFB300" strokeWidth="1.5" strokeDasharray="10 15" opacity="0.6" />
-      <circle cx="100" cy="100" r="32" fill="none" stroke="#ff9100" strokeWidth="1" strokeDasharray="5 10" opacity="0.4" />
-      
-      {/* 4 Grilled Lamb Chops elegantly crossed */}
-      {/* Chop 1 */}
-      <g transform="rotate(35 100 100)">
-        <path d="M45,100 C45,85 70,80 90,95 C100,102 120,85 145,80 C150,79 155,83 155,88 C155,93 140,110 120,105 C95,98 85,115 45,100 Z" fill="#4E2312" opacity="0.95" />
-        <path d="M48,99 C55,90 70,88 84,97" stroke="#2B1309" strokeWidth="4.5" strokeLinecap="round" />
-        {/* Bone */}
-        <path d="M120,103 L152,82" stroke="#ece0d1" strokeWidth="5" strokeLinecap="round" />
-        <path d="M150,83 C153,80 156,84 152,85" fill="#ece0d1" />
-        {/* Sear mark details */}
-        <line x1="60" y1="92" x2="68" y2="100" stroke="#1f0a03" strokeWidth="2.5" />
-        <line x1="70" y1="94" x2="78" y2="102" stroke="#1f0a03" strokeWidth="2.5" />
-      </g>
-      
-      {/* Chop 2 */}
-      <g transform="rotate(130 100 100)">
-        <path d="M45,100 C45,85 70,80 90,95 C100,102 120,85 145,80 C150,79 155,83 155,88 C155,93 140,110 120,105 C95,98 85,115 45,100 Z" fill="#3D1A0C" />
-        <path d="M48,99 C55,90 70,88 84,97" stroke="#230E05" strokeWidth="4.5" strokeLinecap="round" />
-        <path d="M120,103 L152,82" stroke="#f4eae1" strokeWidth="5" strokeLinecap="round" />
-        <line x1="60" y1="92" x2="68" y2="100" stroke="#1c0701" strokeWidth="2.5" />
-        <line x1="70" y1="94" x2="78" y2="102" stroke="#1c0701" strokeWidth="2.5" />
-      </g>
-
-      {/* Chop 3 */}
-      <g transform="rotate(220 100 100)">
-        <path d="M45,100 C45,85 70,80 90,95 C100,102 120,85 145,80 C150,79 155,83 155,88 C155,93 140,110 120,105 C95,98 85,115 45,100 Z" fill="#421D0E" />
-        <path d="M48,99 C55,90 70,88 84,97" stroke="#251006" strokeWidth="4.5" strokeLinecap="round" />
-        <path d="M120,103 L152,82" stroke="#f4eae1" strokeWidth="5" strokeLinecap="round" />
-        <line x1="60" y1="92" x2="68" y2="100" stroke="#1f0a03" strokeWidth="2.5" />
-      </g>
-
-      {/* Chop 4 (On top) */}
-      <g transform="rotate(300 100 100)">
-        {/* Shadow */}
-        <path d="M45,103 C45,88 70,83 90,98 L145,83 Q150,83 147,90 L120,108 Z" fill="rgba(0,0,0,0.15)" filter="blur(2px)" />
-        <path d="M45,100 C45,85 70,80 90,95 C100,102 120,85 145,80 C150,79 155,83 155,88 C155,93 140,110 120,105 C95,98 85,115 45,100 Z" fill="#5A2C18" />
-        <path d="M48,99 C55,90 70,88 84,97" stroke="#311508" strokeWidth="4.5" strokeLinecap="round" />
-        <path d="M120,103 L152,82" stroke="#fffcf9" strokeWidth="5" strokeLinecap="round" />
-        <line x1="60" y1="92" x2="68" y2="100" stroke="#1d0902" strokeWidth="2.5" />
-        <line x1="70" y1="94" x2="78" y2="102" stroke="#1d0902" strokeWidth="2.5" />
-      </g>
-
-      {/* Glossy Yellow Honey glaze coating */}
-      <ellipse cx="92" cy="98" rx="28" ry="16" fill="url(#honeyGrad)" opacity="0.65" filter="blur(1px)" />
-
-      {/* Green garnish flakes (chopped rosemary/cilantro) */}
-      <circle cx="85" cy="85" r="1.5" fill="#33691E" />
-      <circle cx="112" cy="115" r="2" fill="#2E7D32" />
-      <circle cx="95" cy="120" r="1.2" fill="#558B2F" />
-      <circle cx="115" cy="90" r="1.8" fill="#33691E" />
-      <circle cx="75" cy="110" r="2" fill="#1B5E20" />
-      <path d="M110,80 Q112,74 116,76" stroke="#2E7D32" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-      <path d="M78,118 Q82,122 80,126" stroke="#1B5E20" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-
-      {/* Two golden roasted lemon wedges on the side */}
-      <g transform="translate(118, 118) rotate(-20)">
-        <path d="M0,0 C12,-20 30,-10 24,12 Z" fill="#FBC02D" stroke="#F57F17" strokeWidth="1" />
-        <path d="M2,-2 C10,-16 26,-8 21,9 Z" fill="#FFF59D" />
-        <circle cx="10" cy="0" r="1" fill="#FBC02D" />
-      </g>
-
-      {/* Gradients definitions */}
-      <defs>
-        <radialGradient id="honeyGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#FFA000" stopOpacity="0.8" />
-          <stop offset="60%" stopColor="#FF6F00" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="#FF6F00" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-    </svg>
+    <div className="w-full h-full select-none flex items-center justify-center overflow-hidden">
+      <img src={lambChopsImage} alt="Lamb Chops Platter" className="w-full h-full object-cover rounded-lg" />
+    </div>
   );
 
   const TurkeyWingsIllustration = () => (
@@ -630,111 +555,15 @@ export default function App() {
   );
 
   const BlackenedSalmonIllustration = () => (
-    <svg viewBox="0 0 200 200" className="w-full h-full select-none">
-      <circle cx="100" cy="100" r="85" fill="#1b1c1e" opacity="0.15" filter="blur(4px)" />
-      {/* Textured Black Slate plate */}
-      <circle cx="100" cy="100" r="76" fill="#202124" stroke="#3c4043" strokeWidth="2" />
-      <circle cx="100" cy="100" r="72" fill="#18191c" />
-
-      {/* Yellow rice mound bed underneath */}
-      <g opacity="0.85">
-        <ellipse cx="100" cy="105" rx="46" ry="32" fill="#FBC02D" />
-        <ellipse cx="100" cy="105" rx="42" ry="28" fill="#FDD835" />
-        {/* Rice grains details */}
-        <ellipse cx="85" cy="98" rx="3" ry="1.2" fill="#FFEE58" transform="rotate(15 85 98)" />
-        <ellipse cx="115" cy="115" rx="2.5" ry="1" fill="#FFF59D" transform="rotate(-35 115 115)" />
-        <ellipse cx="100" cy="120" rx="3" ry="1.2" fill="#FFEE58" />
-        <ellipse cx="78" cy="110" rx="2.5" ry="1" fill="#FFF59D" />
-        <circle cx="122" cy="104" r="1.5" fill="#FFEE58" />
-      </g>
-
-      {/* Huge premium blackened salmon fillet seared perfect */}
-      <g transform="translate(68, 62) rotate(-15)">
-        {/* Fish body shadow */}
-        <rect x="-4" y="2" width="72" height="38" rx="8" fill="rgba(0,0,0,0.5)" filter="blur(2px)" />
-        {/* Seared cajun crust block */}
-        <rect x="0" y="0" width="68" height="34" rx="6" fill="#3E2723" stroke="#270F07" strokeWidth="1.5" />
-        {/* Salmon meat showing through cracks */}
-        <path d="M12,4 L12,30 C20,29 25,27 34,29 L34,5 C25,6 18,4 12,4 Z" fill="#E64A19" stroke="#BF360C" strokeWidth="1" />
-        <path d="M16,6 C22,12 28,10 32,7" stroke="#FF7043" strokeWidth="1.5" fill="none" />
-        <path d="M14,16 C20,22 26,20 30,17" stroke="#FF7043" strokeWidth="1.5" fill="none" />
-        <path d="M15,26 C22,30 26,28 31,25" stroke="#FF7043" strokeWidth="1.5" fill="none" opacity="0.9" />
-
-        {/* Charred blackened top marks */}
-        <path d="M0,0 L68,34" stroke="#1D0E0A" strokeWidth="3" strokeDasharray="8 6" />
-        <path d="M2,14 L60,34" stroke="#1D0E0A" strokeWidth="3.5" strokeDasharray="12 4" />
-        <path d="M12,-2 L50,22" stroke="#000000" strokeWidth="2.5" strokeDasharray="5 7" />
-
-        {/* Glossy butter glaze */}
-        <ellipse cx="34" cy="15" rx="18" ry="7" fill="rgba(255,193,7,0.3)" filter="blur(1px)" />
-      </g>
-
-      {/* Fresh cilantro leaves scattered */}
-      <g fill="#43A047">
-        <circle cx="95" cy="72" r="2.5" />
-        <circle cx="102" cy="70" r="2" />
-        <circle cx="75" cy="85" r="2.5" />
-        <circle cx="125" cy="115" r="2.2" />
-      </g>
-      
-      {/* Two rich red cherry tomatoes sautéed on the side */}
-      <circle cx="62" cy="118" r="8" fill="#D84315" />
-      <circle cx="59" cy="116" r="3.5" fill="#FF7043" opacity="0.8" />
-      <path d="M62,111 L60,113" stroke="#2E7D32" strokeWidth="1.5" />
-
-      <circle cx="140" cy="88" r="7.5" fill="#C62828" />
-      <circle cx="137" cy="86" r="3" fill="#EE5353" opacity="0.8" />
-    </svg>
+    <div className="w-full h-full select-none flex items-center justify-center overflow-hidden">
+      <img src={blackenedSalmonImage} alt="Blackened Salmon Platter" className="w-full h-full object-cover rounded-lg" />
+    </div>
   );
 
   const SautéedSteakAlfredoIllustration = () => (
-    <svg viewBox="0 0 200 200" className="w-full h-full select-none">
-      <circle cx="100" cy="100" r="85" fill="#fcf6eb" opacity="0.2" filter="blur(3px)" />
-      {/* Off-white porcelain deep pasta bowl */}
-      <circle cx="100" cy="100" r="76" fill="#F8F9FA" stroke="#DEE2E6" strokeWidth="2" />
-      {/* Deep inside soup rim shadow */}
-      <circle cx="100" cy="100" r="64" fill="#fafafa" stroke="#E9ECEF" strokeWidth="3" />
-      
-      {/* Creamy rich parmesan white alfredo sauce layer */}
-      <circle cx="100" cy="100" r="54" fill="#FFFDE7" />
-
-      {/* Dynamic Swirling pasta noodles loops */}
-      <g stroke="#FFF9C4" strokeWidth="4.5" fill="none" strokeLinecap="round" opacity="0.95">
-        <path d="M72,100 C70,120 115,130 120,105 C124,80 80,72 85,100 C90,120 130,110 125,90" />
-        <path d="M85,85 C100,75 118,90 110,105 C102,120 80,110 92,95 C105,80 125,100 118,115" />
-        <path d="M90,120 C105,128 115,115 110,122" strokeWidth="3" />
-      </g>
-
-      {/* Seared juicy dark-golden steak cubes on top */}
-      <g fill="#4E342E" stroke="#2E1D1A" strokeWidth="1">
-        {/* Steak cube 1 */}
-        <rect x="75" y="85" width="16" height="15" rx="3" transform="rotate(10 83 92)" />
-        <line x1="77" y1="88" x2="84" y2="95" stroke="#1A0C09" strokeWidth="1.5" />
-        {/* Steak cube 2 */}
-        <rect x="105" y="88" width="18" height="16" rx="4" transform="rotate(-25 114 96)" />
-        <line x1="109" y1="91" x2="116" y2="98" stroke="#1A0C09" strokeWidth="1.5" />
-        {/* Steak cube 3 */}
-        <rect x="90" y="108" width="14" height="14" rx="3.5" transform="rotate(45 97 115)" />
-        {/* Steak cube 4 */}
-        <rect x="94" y="68" width="13" height="13" rx="3" transform="rotate(5 100 74)" />
-      </g>
-
-      {/* Glossy butter garlic pools & parsley dashes */}
-      <circle cx="82" cy="106" r="4" fill="#FBC02D" opacity="0.45" filter="blur(1px)" />
-      <circle cx="112" cy="80" r="3" fill="#FBC02D" opacity="0.3" filter="blur(1px)" />
-      
-      {/* Finely chopped Parsley seasoning */}
-      <g fill="#2E7D32" opacity="0.9">
-        <circle cx="85" cy="88" r="1.5" />
-        <circle cx="92" cy="98" r="1.8" />
-        <circle cx="110" cy="102" r="1.3" />
-        <circle cx="100" cy="113" r="1.6" />
-        <circle cx="108" cy="92" r="1.5" />
-        <circle cx="78" cy="95" r="1.2" />
-        <circle cx="98" cy="74" r="1.5" />
-        <circle cx="120" cy="90" r="1.4" />
-      </g>
-    </svg>
+    <div className="w-full h-full select-none flex items-center justify-center overflow-hidden">
+      <img src={sauteedSteakImage} alt="Sautéed Steak" className="w-full h-full object-cover rounded-lg" />
+    </div>
   );
 
   const PhillyKingPlatterIllustration = () => (
@@ -1411,19 +1240,10 @@ export default function App() {
         {/* HEADER / NAVIGATION NAVBAR MATCHING THE SCREENSHOT */}
         <header className="px-6 md:px-10 py-5 flex items-center justify-between border-b border-emerald-950 bg-[#061510]/95 backdrop-blur sticky top-0 z-30 shadow-md">
           
-          {/* Custom SVG Logo: Heart plus fork/knife kitchen system */}
+          {/* Header logo image */}
           <div onClick={() => scrollTo('main-frame-root')} className="flex items-center space-x-2.5 cursor-pointer select-none">
-            <div className="w-10 h-10 rounded-2xl bg-[#FF5C35] flex items-center justify-center text-white shadow-md shadow-[#FF5C35]/20">
-              <svg viewBox="0 0 24 24" className="w-6 h-6 fill-none stroke-current stroke-2" strokeLinecap="round" strokeLinejoin="round">
-                {/* Heart-House base outline */}
-                <path d="M12 21C12 21 3 14 3 8.5C3 5.42 5.42 3 8.5 3C10.28 3 11.87 3.84 12 5.16 C12.13 3.84 13.72 3 15.5 3C18.58 3 21 5.42 21 8.5C21 14 12 21 12 21Z" fill="white" className="text-[#FF5C35]" />
-                {/* Fork icon */}
-                <path d="M10 7.5 L10 11.5" stroke="#FF5C35" strokeWidth="1.5" />
-                <path d="M9 7.5 L11 7.5 M9 8.5 L11 8.5" stroke="#FF5C35" strokeWidth="1" />
-                {/* Knife icon */}
-                <path d="M14 7.5 L14 12.5" stroke="#FF5C35" strokeWidth="1.5" />
-                <path d="M13.5 7.5 Q14.5 6.5 15.5 7.5" fill="none" stroke="#FF5C35" strokeWidth="1" />
-              </svg>
+            <div className="w-10 h-10 rounded-2xl overflow-hidden bg-[#FF5C35] flex items-center justify-center shadow-md shadow-[#FF5C35]/20">
+              <img src={logoImage} alt="Dacrib Kitchen logo" className="object-cover w-full h-full" />
             </div>
             <div>
               <span className="font-display font-black text-xl tracking-tight text-white uppercase block font-sans">
