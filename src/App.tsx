@@ -40,11 +40,9 @@ import {
 import { CartItem, OrderType, PreferredPayment, OrderTimeType } from './types';
 import { entrees, alfredos, salads, wingFlavors, sides, premiumCombos, faqs } from './data';
 import { jsPDF } from 'jspdf';
-import logoImage from './Untitled design (2).png';
-import lambChopsImage from './Lamb Chops Platter.jpg';
 import confetti from 'canvas-confetti';
-import sauteedSteakImage from './Sautéed Steak.jpg';
-import blackenedSalmonImage from './Blackened Salmon Platter.jpg';
+
+
 
 // Dual-mode authentication & history persistence import
 import {
@@ -76,6 +74,8 @@ interface FeatureArch {
   // Custom interactive SVG component to draw the food beautifully on the plate
   illustration: () => any;
 }
+
+
 
 export default function App() {
   // --- GRAB-SWIPE MOBILE SCROLL ENGINE ACCORD ---
@@ -439,6 +439,8 @@ export default function App() {
   const [feedbackRating, setFeedbackRating] = useState<{[orderId: string]: number}>({});
   const [feedbackReview, setFeedbackReview] = useState<{[orderId: string]: string}>({});
 
+
+
   const [redeemedPoints, setRedeemedPoints] = useState<number>(() => {
     try {
       const saved = localStorage.getItem('dacrib_redeemedPoints');
@@ -537,14 +539,88 @@ export default function App() {
   }, [deliveryAddress]);
 
   // --- FOOD ILLUSTRATIONS FOR DETAILED VISUAL PRESENTATION ---
-  // Use the uploaded JPG for the Lamb Chops illustration so all places that
-  // render `HoneyGarlicLambChopsIllustration` will display the real photo.
   const HoneyGarlicLambChopsIllustration = () => (
-    <div className="w-full h-full select-none flex items-center justify-center overflow-hidden">
-      <img src={lambChopsImage} alt="Honey Garlic Lamb Chops" className="w-full h-full object-cover rounded-lg" />
-    </div>
+    <svg viewBox="0 0 200 200" className="w-full h-full select-none">
+      {/* Wooden shadow board base */}
+      <circle cx="100" cy="100" r="85" fill="#f8eedc" opacity="0.3" filter="blur(4px)" />
+      {/* Terracotta custom dish plate */}
+      <circle cx="100" cy="100" r="76" fill="#fcf9f2" stroke="#e3dcd3" strokeWidth="2" />
+      <circle cx="100" cy="100" r="62" fill="#faf5eb" stroke="#ece3d5" strokeWidth="1" />
+      
+      {/* Golden Honey drizzle rings */}
+      <circle cx="100" cy="100" r="45" fill="none" stroke="#FFB300" strokeWidth="1.5" strokeDasharray="10 15" opacity="0.6" />
+      <circle cx="100" cy="100" r="32" fill="none" stroke="#ff9100" strokeWidth="1" strokeDasharray="5 10" opacity="0.4" />
+      
+      {/* 4 Grilled Lamb Chops elegantly crossed */}
+      {/* Chop 1 */}
+      <g transform="rotate(35 100 100)">
+        <path d="M45,100 C45,85 70,80 90,95 C100,102 120,85 145,80 C150,79 155,83 155,88 C155,93 140,110 120,105 C95,98 85,115 45,100 Z" fill="#4E2312" opacity="0.95" />
+        <path d="M48,99 C55,90 70,88 84,97" stroke="#2B1309" strokeWidth="4.5" strokeLinecap="round" />
+        {/* Bone */}
+        <path d="M120,103 L152,82" stroke="#ece0d1" strokeWidth="5" strokeLinecap="round" />
+        <path d="M150,83 C153,80 156,84 152,85" fill="#ece0d1" />
+        {/* Sear mark details */}
+        <line x1="60" y1="92" x2="68" y2="100" stroke="#1f0a03" strokeWidth="2.5" />
+        <line x1="70" y1="94" x2="78" y2="102" stroke="#1f0a03" strokeWidth="2.5" />
+      </g>
+      
+      {/* Chop 2 */}
+      <g transform="rotate(130 100 100)">
+        <path d="M45,100 C45,85 70,80 90,95 C100,102 120,85 145,80 C150,79 155,83 155,88 C155,93 140,110 120,105 C95,98 85,115 45,100 Z" fill="#3D1A0C" />
+        <path d="M48,99 C55,90 70,88 84,97" stroke="#230E05" strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M120,103 L152,82" stroke="#f4eae1" strokeWidth="5" strokeLinecap="round" />
+        <line x1="60" y1="92" x2="68" y2="100" stroke="#1c0701" strokeWidth="2.5" />
+        <line x1="70" y1="94" x2="78" y2="102" stroke="#1c0701" strokeWidth="2.5" />
+      </g>
+
+      {/* Chop 3 */}
+      <g transform="rotate(220 100 100)">
+        <path d="M45,100 C45,85 70,80 90,95 C100,102 120,85 145,80 C150,79 155,83 155,88 C155,93 140,110 120,105 C95,98 85,115 45,100 Z" fill="#421D0E" />
+        <path d="M48,99 C55,90 70,88 84,97" stroke="#251006" strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M120,103 L152,82" stroke="#f4eae1" strokeWidth="5" strokeLinecap="round" />
+        <line x1="60" y1="92" x2="68" y2="100" stroke="#1f0a03" strokeWidth="2.5" />
+      </g>
+
+      {/* Chop 4 (On top) */}
+      <g transform="rotate(300 100 100)">
+        {/* Shadow */}
+        <path d="M45,103 C45,88 70,83 90,98 L145,83 Q150,83 147,90 L120,108 Z" fill="rgba(0,0,0,0.15)" filter="blur(2px)" />
+        <path d="M45,100 C45,85 70,80 90,95 C100,102 120,85 145,80 C150,79 155,83 155,88 C155,93 140,110 120,105 C95,98 85,115 45,100 Z" fill="#5A2C18" />
+        <path d="M48,99 C55,90 70,88 84,97" stroke="#311508" strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M120,103 L152,82" stroke="#fffcf9" strokeWidth="5" strokeLinecap="round" />
+        <line x1="60" y1="92" x2="68" y2="100" stroke="#1d0902" strokeWidth="2.5" />
+        <line x1="70" y1="94" x2="78" y2="102" stroke="#1d0902" strokeWidth="2.5" />
+      </g>
+
+      {/* Glossy Yellow Honey glaze coating */}
+      <ellipse cx="92" cy="98" rx="28" ry="16" fill="url(#honeyGrad)" opacity="0.65" filter="blur(1px)" />
+
+      {/* Green garnish flakes (chopped rosemary/cilantro) */}
+      <circle cx="85" cy="85" r="1.5" fill="#33691E" />
+      <circle cx="112" cy="115" r="2" fill="#2E7D32" />
+      <circle cx="95" cy="120" r="1.2" fill="#558B2F" />
+      <circle cx="115" cy="90" r="1.8" fill="#33691E" />
+      <circle cx="75" cy="110" r="2" fill="#1B5E20" />
+      <path d="M110,80 Q112,74 116,76" stroke="#2E7D32" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+      <path d="M78,118 Q82,122 80,126" stroke="#1B5E20" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+
+      {/* Two golden roasted lemon wedges on the side */}
+      <g transform="translate(118, 118) rotate(-20)">
+        <path d="M0,0 C12,-20 30,-10 24,12 Z" fill="#FBC02D" stroke="#F57F17" strokeWidth="1" />
+        <path d="M2,-2 C10,-16 26,-8 21,9 Z" fill="#FFF59D" />
+        <circle cx="10" cy="0" r="1" fill="#FBC02D" />
+      </g>
+
+      {/* Gradients definitions */}
+      <defs>
+        <radialGradient id="honeyGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#FFA000" stopOpacity="0.8" />
+          <stop offset="60%" stopColor="#FF6F00" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#FF6F00" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+    </svg>
   );
-  
 
   const TurkeyWingsIllustration = () => (
     <svg viewBox="0 0 200 200" className="w-full h-full select-none">
@@ -593,15 +669,111 @@ export default function App() {
   );
 
   const BlackenedSalmonIllustration = () => (
-    <div className="w-full h-full select-none flex items-center justify-center overflow-hidden">
-      <img src={blackenedSalmonImage} alt="Blackened Salmon Platter" className="w-full h-full object-cover rounded-lg" />
-    </div>
+    <svg viewBox="0 0 200 200" className="w-full h-full select-none">
+      <circle cx="100" cy="100" r="85" fill="#1b1c1e" opacity="0.15" filter="blur(4px)" />
+      {/* Textured Black Slate plate */}
+      <circle cx="100" cy="100" r="76" fill="#202124" stroke="#3c4043" strokeWidth="2" />
+      <circle cx="100" cy="100" r="72" fill="#18191c" />
+
+      {/* Yellow rice mound bed underneath */}
+      <g opacity="0.85">
+        <ellipse cx="100" cy="105" rx="46" ry="32" fill="#FBC02D" />
+        <ellipse cx="100" cy="105" rx="42" ry="28" fill="#FDD835" />
+        {/* Rice grains details */}
+        <ellipse cx="85" cy="98" rx="3" ry="1.2" fill="#FFEE58" transform="rotate(15 85 98)" />
+        <ellipse cx="115" cy="115" rx="2.5" ry="1" fill="#FFF59D" transform="rotate(-35 115 115)" />
+        <ellipse cx="100" cy="120" rx="3" ry="1.2" fill="#FFEE58" />
+        <ellipse cx="78" cy="110" rx="2.5" ry="1" fill="#FFF59D" />
+        <circle cx="122" cy="104" r="1.5" fill="#FFEE58" />
+      </g>
+
+      {/* Huge premium blackened salmon fillet seared perfect */}
+      <g transform="translate(68, 62) rotate(-15)">
+        {/* Fish body shadow */}
+        <rect x="-4" y="2" width="72" height="38" rx="8" fill="rgba(0,0,0,0.5)" filter="blur(2px)" />
+        {/* Seared cajun crust block */}
+        <rect x="0" y="0" width="68" height="34" rx="6" fill="#3E2723" stroke="#270F07" strokeWidth="1.5" />
+        {/* Salmon meat showing through cracks */}
+        <path d="M12,4 L12,30 C20,29 25,27 34,29 L34,5 C25,6 18,4 12,4 Z" fill="#E64A19" stroke="#BF360C" strokeWidth="1" />
+        <path d="M16,6 C22,12 28,10 32,7" stroke="#FF7043" strokeWidth="1.5" fill="none" />
+        <path d="M14,16 C20,22 26,20 30,17" stroke="#FF7043" strokeWidth="1.5" fill="none" />
+        <path d="M15,26 C22,30 26,28 31,25" stroke="#FF7043" strokeWidth="1.5" fill="none" opacity="0.9" />
+
+        {/* Charred blackened top marks */}
+        <path d="M0,0 L68,34" stroke="#1D0E0A" strokeWidth="3" strokeDasharray="8 6" />
+        <path d="M2,14 L60,34" stroke="#1D0E0A" strokeWidth="3.5" strokeDasharray="12 4" />
+        <path d="M12,-2 L50,22" stroke="#000000" strokeWidth="2.5" strokeDasharray="5 7" />
+
+        {/* Glossy butter glaze */}
+        <ellipse cx="34" cy="15" rx="18" ry="7" fill="rgba(255,193,7,0.3)" filter="blur(1px)" />
+      </g>
+
+      {/* Fresh cilantro leaves scattered */}
+      <g fill="#43A047">
+        <circle cx="95" cy="72" r="2.5" />
+        <circle cx="102" cy="70" r="2" />
+        <circle cx="75" cy="85" r="2.5" />
+        <circle cx="125" cy="115" r="2.2" />
+      </g>
+      
+      {/* Two rich red cherry tomatoes sautéed on the side */}
+      <circle cx="62" cy="118" r="8" fill="#D84315" />
+      <circle cx="59" cy="116" r="3.5" fill="#FF7043" opacity="0.8" />
+      <path d="M62,111 L60,113" stroke="#2E7D32" strokeWidth="1.5" />
+
+      <circle cx="140" cy="88" r="7.5" fill="#C62828" />
+      <circle cx="137" cy="86" r="3" fill="#EE5353" opacity="0.8" />
+    </svg>
   );
 
   const SautéedSteakAlfredoIllustration = () => (
-    <div className="w-full h-full select-none flex items-center justify-center overflow-hidden">
-      <img src={sauteedSteakImage} alt="Sautéed Steak" className="w-full h-full object-cover rounded-lg" />
-    </div>
+    <svg viewBox="0 0 200 200" className="w-full h-full select-none">
+      <circle cx="100" cy="100" r="85" fill="#fcf6eb" opacity="0.2" filter="blur(3px)" />
+      {/* Off-white porcelain deep pasta bowl */}
+      <circle cx="100" cy="100" r="76" fill="#F8F9FA" stroke="#DEE2E6" strokeWidth="2" />
+      {/* Deep inside soup rim shadow */}
+      <circle cx="100" cy="100" r="64" fill="#fafafa" stroke="#E9ECEF" strokeWidth="3" />
+      
+      {/* Creamy rich parmesan white alfredo sauce layer */}
+      <circle cx="100" cy="100" r="54" fill="#FFFDE7" />
+
+      {/* Dynamic Swirling pasta noodles loops */}
+      <g stroke="#FFF9C4" strokeWidth="4.5" fill="none" strokeLinecap="round" opacity="0.95">
+        <path d="M72,100 C70,120 115,130 120,105 C124,80 80,72 85,100 C90,120 130,110 125,90" />
+        <path d="M85,85 C100,75 118,90 110,105 C102,120 80,110 92,95 C105,80 125,100 118,115" />
+        <path d="M90,120 C105,128 115,115 110,122" strokeWidth="3" />
+      </g>
+
+      {/* Seared juicy dark-golden steak cubes on top */}
+      <g fill="#4E342E" stroke="#2E1D1A" strokeWidth="1">
+        {/* Steak cube 1 */}
+        <rect x="75" y="85" width="16" height="15" rx="3" transform="rotate(10 83 92)" />
+        <line x1="77" y1="88" x2="84" y2="95" stroke="#1A0C09" strokeWidth="1.5" />
+        {/* Steak cube 2 */}
+        <rect x="105" y="88" width="18" height="16" rx="4" transform="rotate(-25 114 96)" />
+        <line x1="109" y1="91" x2="116" y2="98" stroke="#1A0C09" strokeWidth="1.5" />
+        {/* Steak cube 3 */}
+        <rect x="90" y="108" width="14" height="14" rx="3.5" transform="rotate(45 97 115)" />
+        {/* Steak cube 4 */}
+        <rect x="94" y="68" width="13" height="13" rx="3" transform="rotate(5 100 74)" />
+      </g>
+
+      {/* Glossy butter garlic pools & parsley dashes */}
+      <circle cx="82" cy="106" r="4" fill="#FBC02D" opacity="0.45" filter="blur(1px)" />
+      <circle cx="112" cy="80" r="3" fill="#FBC02D" opacity="0.3" filter="blur(1px)" />
+      
+      {/* Finely chopped Parsley seasoning */}
+      <g fill="#2E7D32" opacity="0.9">
+        <circle cx="85" cy="88" r="1.5" />
+        <circle cx="92" cy="98" r="1.8" />
+        <circle cx="110" cy="102" r="1.3" />
+        <circle cx="100" cy="113" r="1.6" />
+        <circle cx="108" cy="92" r="1.5" />
+        <circle cx="78" cy="95" r="1.2" />
+        <circle cx="98" cy="74" r="1.5" />
+        <circle cx="120" cy="90" r="1.4" />
+      </g>
+    </svg>
   );
 
   const PhillyKingPlatterIllustration = () => (
@@ -625,8 +797,13 @@ export default function App() {
 
       {/* Sector 3: Juicy Rib style Steak & 2 Lamb Chops crossed on top */}
       <g transform="translate(10, 10)">
-        {/* Use uploaded Sautéed Steak photo for this sector */}
-        <image href={sauteedSteakImage} x="60" y="35" width="90" height="60" preserveAspectRatio="xMidYMid slice" />
+        {/* Sautéed steak pile */}
+        <path d="M85,45 C75,55 105,75 115,60 Z" fill="#4E342E" stroke="#37221E" />
+        <path d="M92,52 L106,64" stroke="#1d0a03" strokeWidth="2" />
+        {/* Top Lamb chop with white bone sticking out */}
+        <path d="M60,65 C55,50 82,45 100,60 C110,65 112,50 135,45 C138,45 140,50 135,53 C110,75 75,75 60,65 Z" fill="#5D2E1A" />
+        <line x1="110" y1="62" x2="134" y2="47" stroke="#ffffff" strokeWidth="4.5" strokeLinecap="round" />
+        <circle cx="78" cy="58" r="1" fill="#43A047" />
       </g>
       
       {/* Parsley and pepper flakes dusting */}
@@ -1273,9 +1450,20 @@ export default function App() {
         {/* HEADER / NAVIGATION NAVBAR MATCHING THE SCREENSHOT */}
         <header className="px-6 md:px-10 py-5 flex items-center justify-between border-b border-emerald-950 bg-[#061510]/95 backdrop-blur sticky top-0 z-30 shadow-md">
           
-          {/* Logo image next to the title */}
-          <div onClick={() => scrollTo('main-frame-root')} className="flex items-center space-x-3 cursor-pointer select-none">
-            <img src={logoImage} alt="DaCrib Kitchen logo" className="w-18 h-18 rounded-2xl object-cover" />
+          {/* Custom SVG Logo: Heart plus fork/knife kitchen system */}
+          <div onClick={() => scrollTo('main-frame-root')} className="flex items-center space-x-2.5 cursor-pointer select-none">
+            <div className="w-10 h-10 rounded-2xl bg-[#FF5C35] flex items-center justify-center text-white shadow-md shadow-[#FF5C35]/20">
+              <svg viewBox="0 0 24 24" className="w-6 h-6 fill-none stroke-current stroke-2" strokeLinecap="round" strokeLinejoin="round">
+                {/* Heart-House base outline */}
+                <path d="M12 21C12 21 3 14 3 8.5C3 5.42 5.42 3 8.5 3C10.28 3 11.87 3.84 12 5.16 C12.13 3.84 13.72 3 15.5 3C18.58 3 21 5.42 21 8.5C21 14 12 21 12 21Z" fill="white" className="text-[#FF5C35]" />
+                {/* Fork icon */}
+                <path d="M10 7.5 L10 11.5" stroke="#FF5C35" strokeWidth="1.5" />
+                <path d="M9 7.5 L11 7.5 M9 8.5 L11 8.5" stroke="#FF5C35" strokeWidth="1" />
+                {/* Knife icon */}
+                <path d="M14 7.5 L14 12.5" stroke="#FF5C35" strokeWidth="1.5" />
+                <path d="M13.5 7.5 Q14.5 6.5 15.5 7.5" fill="none" stroke="#FF5C35" strokeWidth="1" />
+              </svg>
+            </div>
             <div>
               <span className="font-display font-black text-xl tracking-tight text-white uppercase block font-sans">
                 DACRIB <span className="text-[#FF5C35]">KITCHEN</span>
@@ -2674,210 +2862,7 @@ export default function App() {
 
         </div>
 
-        {/* RECENTLY ORDERED SECTION & INTERACTIVE AI GEMINI MATCH CAROUSEL */}
-        <div className="bg-[#030A07] px-6 md:px-10 py-10 border-t border-emerald-950/40" id="ai-recommender">
-          
-          <div className="bg-[#061510]/80 border border-emerald-900/30 rounded-2xl p-6 text-left relative overflow-hidden">
-            
-            {/* Header with Dual Tabs */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-emerald-950/40 mb-6">
-              <div className="space-y-1">
-                <span className="text-[9px] uppercase font-mono bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded border border-emerald-800 tracking-wider font-extrabold select-none">
-                  ⚡ INSTANT COMPASS RE-ENGINEERING
-                </span>
-                <h4 className="font-display font-black text-white text-lg uppercase tracking-tight mt-1 flex items-center gap-1.5">
-                  <Compass className="w-5 h-5 text-[#FF5C35]" />
-                  <span>Diner Taste Guidance Suite</span>
-                </h4>
-              </div>
-            </div>
 
-            <div className="space-y-6">
-                
-                {/* Information Callout */}
-                <div className="bg-[#122A1E]/30 border border-emerald-850/40 p-3.5 rounded-xl text-emerald-200/90 text-xs leading-relaxed max-w-4xl select-none">
-                  💡 <span className="font-black text-[#FF5C35] font-sans">How it works:</span> Fill out your cravings and protein interests below, then tap our chef matcher. The system constructs a custom context query to **Google Gemini (gemini-3.5-flash)** server-side to design physical Philly platters matched specifically with custom soul-food explanations tuned for you!
-                </div>
-
-                {/* The Quiz Option Bento Selection Bar */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-[#030906] p-4 rounded-xl border border-emerald-950/60">
-                  {/* Q1: Cravings */}
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] uppercase font-mono text-emerald-400 font-black tracking-wider block">1. Style Cravings</label>
-                    <select
-                      value={selectedCraving}
-                      onChange={(e) => setSelectedCraving(e.target.value)}
-                      className="w-full bg-[#061510] border border-emerald-900/40 text-white font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5C35] cursor-pointer"
-                    >
-                      <option value="creamy & velvety" className="bg-[#0b281f] text-white">Creamy & Velvet (Alfredo)</option>
-                      <option value="spicy & heavy" className="bg-[#0b281f] text-white">Cajun Searing Spices (Seafood)</option>
-                      <option value="smoky & savory" className="bg-[#0b281f] text-white">Smoky Honey Glazes (Platters)</option>
-                      <option value="fresh & lightweight" className="bg-[#0b281f] text-white">Crisp & Chilled (Salads & Pasta)</option>
-                    </select>
-                  </div>
-
-                  {/* Q2: Protein meat option */}
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] uppercase font-mono text-emerald-400 font-black tracking-wider block">2. Preferred Protein</label>
-                    <select
-                      value={selectedProtein}
-                      onChange={(e) => setSelectedProtein(e.target.value)}
-                      className="w-full bg-[#061510] border border-emerald-900/40 text-white font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5C35] cursor-pointer"
-                    >
-                      <option value="any" className="bg-[#0b281f] text-white">Surprise Me (Any Meat/Fish)</option>
-                      <option value="lamb chops" className="bg-[#0b281f] text-white">Gourmet Lamb Chops</option>
-                      <option value="turkey wing" className="bg-[#0b281f] text-white">Slow-Cooked Turkey Wings</option>
-                      <option value="salmon" className="bg-[#0b281f] text-white">Cajun Blackened Salmon</option>
-                      <option value="steak" className="bg-[#0b281f] text-white">Sautéed Steak Bits</option>
-                      <option value="chicken" className="bg-[#0b281f] text-white">Scrumptious Chicken Breast</option>
-                      <option value="shrimp" className="bg-[#0b281f] text-white">Butter Sautéed Jumbo Shrimp</option>
-                      <option value="wings" className="bg-[#0b281f] text-white">Wing Ding Platter</option>
-                    </select>
-                  </div>
-
-                  {/* Q3: Hunger Intake scale */}
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] uppercase font-mono text-emerald-400 font-black tracking-wider block">3. Hunger Intake Scale</label>
-                    <select
-                      value={selectedHunger}
-                      onChange={(e) => setSelectedHunger(e.target.value)}
-                      className="w-full bg-[#061510] border border-emerald-900/40 text-white font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5C35] cursor-pointer"
-                    >
-                      <option value="snack" className="bg-[#0b281f] text-white">Cozy Snack (Chilled Sides)</option>
-                      <option value="platter" className="bg-[#0b281f] text-white">Standard Soul Base Platter</option>
-                      <option value="feast" className="bg-[#0b281f] text-white">Monster Feast (Combos & Extra Helper)</option>
-                    </select>
-                  </div>
-
-                  {/* Q4: Spice Level Flare */}
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] uppercase font-mono text-emerald-400 font-black tracking-wider block">4. Spice Flare Kick</label>
-                    <select
-                      value={selectedSpice}
-                      onChange={(e) => setSelectedSpice(e.target.value)}
-                      className="w-full bg-[#061510] border border-emerald-900/40 text-white font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5C35] cursor-pointer"
-                    >
-                      <option value="none" className="bg-[#0b281f] text-white">None (Completely Sweet & Mild)</option>
-                      <option value="mild" className="bg-[#0b281f] text-white">Mild House Dusting</option>
-                      <option value="hot" className="bg-[#0b281f] text-white">Searing Honey Hot drizzle</option>
-                      <option value="volcano" className="bg-[#0b281f] text-white">Volcano Mango Habanero Infusion</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Call-to-Action Match Button */}
-                <div className="flex justify-center select-none">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="button"
-                    onClick={fetchGeminiRecommendations}
-                    disabled={geminiLoading}
-                    className="py-3 px-8 bg-[#FF5C35] hover:bg-[#E64117] text-white rounded-xl font-display font-black text-xs uppercase tracking-widest transition shadow-md disabled:opacity-50 cursor-pointer flex items-center justify-center space-x-2 shadow-lg"
-                  >
-                    <span>{geminiLoading ? '⚡ GRILLING CUSTOM MATCHES...' : '🔮 SCAN TASTE AND ENVISION PLATTER'}</span>
-                    {!geminiLoading && <Sparkles className="w-4 h-4 text-amber-400" />}
-                  </motion.button>
-                </div>
-
-                {/* Visual Error Message / Fallback warning */}
-                {geminiError && (
-                  <p className="text-[10px] text-red-400 font-mono text-center select-all bg-red-950/20 p-2 rounded-lg border border-red-900/40 max-w-lg mx-auto">
-                    ⚠️ {geminiError}
-                  </p>
-                )}
-
-                {/* THE RECOMMENDATIONS SLIDABLE CAROUSEL GRID */}
-                <div className="space-y-3 pt-2">
-                  <div className="flex justify-between items-center select-none">
-                    <span className="text-[10px] uppercase font-mono text-emerald-400 font-black tracking-widest">
-                      {geminiResults.length > 0 ? `🔥 CUSTOM CAROUSEL MATCHES (${geminiResults.length})` : '🔍 Your personalized AI recommended dishes will load here...'}
-                    </span>
-                    {geminiResults.length > 0 && (
-                      <span className="text-[8px] font-mono text-gray-400 uppercase">
-                        Swipe left/right or scroll to explore recommendations →
-                      </span>
-                    )}
-                  </div>
-
-                  {geminiLoading ? (
-                    /* Sizzple loader spinner */
-                    <div className="border border-dashed border-emerald-900 bg-[#030906] py-16 rounded-2xl flex flex-col items-center justify-center space-y-3">
-                      <div className="w-10 h-10 border-4 border-emerald-900 border-t-[#FF5C35] rounded-full animate-spin" />
-                      <p className="text-xs font-mono text-emerald-400/80 uppercase tracking-widest animate-pulse">
-                        Asking Crib AI Chef... Boiling mac-and-cheese water...
-                      </p>
-                    </div>
-                  ) : geminiResults.length === 0 ? (
-                    /* Elegant placeholder card */
-                    <div className="border border-dashed border-emerald-900 bg-[#030906] py-12 rounded-2xl text-center flex flex-col items-center justify-center space-y-2 select-none">
-                      <span className="text-3xl">🍲</span>
-                      <h5 className="font-display font-bold text-white/80 uppercase text-xs">Awaiting Soul Combination</h5>
-                      <p className="text-[10px] font-mono text-emerald-400/70 max-w-sm">
-                        Select your cravings and let the Gemini API analyze the kitchen stock to suggest standard or completely custom platters tailored precisely for you!
-                      </p>
-                    </div>
-                  ) : (
-                    /* Horizontal Carousel Overflow Scroller Grid matching video custom deep green cards */
-                    <div className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x scrollbar-thin scrollbar-thumb-emerald-950/20 scroll-smooth">
-                      {geminiResults.map((rec, idx) => {
-                        return (
-                          <div
-                            key={idx}
-                            className="bg-[#0B2217] border border-emerald-800/40 rounded-2xl p-5 min-w-[290px] max-w-[340px] flex-1 flex flex-col justify-between space-y-4 snap-center relative shadow-lg transform transition duration-300 hover:scale-[1.01]"
-                          >
-                            <div className="space-y-2.5">
-                              {/* Decors: stars, badges */}
-                              <div className="flex justify-between items-center select-none">
-                                <span className="text-[9px] font-mono text-white bg-amber-600/90 px-2 py-0.5 rounded-full uppercase tracking-wider font-extrabold shadow-sm">
-                                  {rec.accentBadge || 'VIP FAV'}
-                                </span>
-                                <div className="flex items-center gap-0.5 text-amber-400">
-                                  {[1, 2, 3, 4, 5].map((s) => (
-                                    <Star key={s} className="w-3 h-3 fill-amber-400" />
-                                  ))}
-                                </div>
-                              </div>
-
-                              <div className="space-y-1">
-                                <h5 className="font-display font-black text-white text-sm md:text-base tracking-tight uppercase leading-snug">
-                                  {rec.name}
-                                </h5>
-                                <div className="flex items-baseline space-x-1.5 font-mono select-none">
-                                  <span className="text-emerald-400 text-xs font-bold font-sans">${rec.price}.00</span>
-                                  <span className="text-[9px] text-gray-400 uppercase">({rec.matchPercentage || 95}% Taste Score)</span>
-                                </div>
-                              </div>
-
-                              <p className="text-[10.5px] font-mono text-gray-300 leading-relaxed italic border-t border-emerald-950/45 pt-2.5">
-                                "{rec.desc}"
-                              </p>
-                            </div>
-
-                            {/* Button block */}
-                            <div className="pt-3 border-t border-emerald-950/45 select-none">
-                              <button
-                                type="button"
-                                onClick={() => handleAddRecommendedToCart(rec)}
-                                className="w-full bg-[#FF5C35] hover:bg-[#E64117] text-white font-display font-black text-[10px] uppercase tracking-wider py-2.5 rounded-xl transition text-center flex items-center justify-center gap-1.5 cursor-pointer shadow"
-                              >
-                                <span>Instant Add to Ticket</span>
-                                <ShoppingBag className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                </div>
-
-              </div>
-
-          </div>
-
-        </div>
 
         {/* BOTTOM METADATA & FOOTER */}
         <footer className="bg-[#030304] text-white px-6 md:px-12 py-10 text-center space-y-4 border-t border-emerald-950/20">
