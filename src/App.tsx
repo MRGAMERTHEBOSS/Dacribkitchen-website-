@@ -692,6 +692,14 @@ export default function App() {
     <FoodPhoto src={sauteedSteakImage} alt="Sautéed steak alfredo platter" />
   );
 
+  const TurkeyWingsIllustration = () => (
+    <FoodPhoto src={turkeyWingsImage} alt="Turkey wings platter" />
+  );
+
+  const BlackenedSalmonIllustration = () => (
+    <FoodPhoto src={blackenedSalmonImage} alt="Blackened salmon platter" />
+  );
+
   const PhillyKingPlatterIllustration = () => (
     <svg viewBox="0 0 200 200" className="w-full h-full select-none">
       <circle cx="100" cy="100" r="85" fill="#8d6e63" opacity="0.2" filter="blur(5px)" />
