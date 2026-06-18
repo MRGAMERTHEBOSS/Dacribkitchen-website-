@@ -68,17 +68,22 @@ import turkeyWingsImg from './assets/images/turkey_wing_platter.png';
 import steakImg from './assets/images/steak_tips_platter.png';
 import chickenImg from './assets/images/chicken_platter.png';
 import wingsImg from './assets/images/wings_platter.png';
+import shrimpImg from './assets/images/Sauteed_Shrimp.png';
+import pastaSaladImg from './assets/images/Pasta_Salad.png';
+import seafoodSaladImg from './assets/images/Seafood_Salad.png';
+import sauteedSteakImg from './assets/images/Sautéed_Steak.png';
+import logoImg from './assets/images/logo.png';
 
 // Map IDs to imported images
 const imageMap: Record<string, string> = {
   lamb_chops: lambChopsImg,
   salmon: salmonImg,
   turkey_wings: turkeyWingsImg,
-  steak: steakImg,
+  steak: sauteedSteakImg,
   chicken_platter: chickenImg,
-  shrimp_platter: wingsImg,
-  pasta_salad: wingsImg,
-  seafood_salad: salmonImg,
+  shrimp_platter: shrimpImg,
+  pasta_salad: pastaSaladImg,
+  seafood_salad: seafoodSaladImg,
 };
 
 export default function App() {
@@ -946,11 +951,13 @@ export default function App() {
       {/* FIXED BOUTIQUE NAV HEADER */}
       <header className="px-6 md:px-12 py-5.5 flex items-center justify-between border-b border-[#143323] bg-[#092215]/95 backdrop-blur-md sticky top-0 z-30 shadow-md">
         
-        {/* Typographic Serif Logo Matching Pizza-style Brand */}
+        {/* Brand logo */}
         <div onClick={() => scrollTo('main-frame-root')} className="flex items-center space-x-3 cursor-pointer select-none">
-          <div className="w-10.5 h-10.5 rounded-full bg-[#D32F2F] flex items-center justify-center text-white shadow-md shadow-[#D32F2F]/20">
-            <span className="font-serif font-black text-lg">C</span>
-          </div>
+          <img
+            src={logoImg}
+            alt="DaCrib Kitchen logo"
+            className="w-16 h-16 md:w-20 md:h-20 object-contain shrink-0"
+          />
           <div>
             <span className="font-serif font-black text-2xl tracking-tighter text-[#E8ECE9] uppercase block leading-none">
               DA CRIB <span className="text-[#D32F2F]">KITCHEN</span>
@@ -1144,7 +1151,7 @@ export default function App() {
               <img 
                 src={imageMap.salmon} 
                 alt="DaCrib Specialty Blackened Salmon Platter" 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-[center_68%] scale-[1.12]"
                 referrerPolicy="no-referrer"
               />
               {/* Overlaid Banner Badge with no clipping bounds */}
@@ -1153,7 +1160,7 @@ export default function App() {
                   <span className="w-1.5 h-1.5 rounded-full bg-[#E5A93C] animate-pulse" />
                   <span className="text-[10px] font-mono font-black uppercase text-[#E5A93C] tracking-widest">SIGNATURE CRIB PLATTER</span>
                 </div>
-                <h4 className="font-serif font-black text-white text-base leading-tight uppercase mt-1 tracking-tight">BLACKENED CAJUN SALMON</h4>
+                <h4 className="font-serif font-black text-white text-base leading-tight uppercase mt-1 tracking-tight">BLACKENED SALMON</h4>
               </div>
             </motion.div>
           </div>
