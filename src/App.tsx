@@ -1085,7 +1085,7 @@ export default function App() {
                     <span className="text-[10px] uppercase font-mono text-stone-400 tracking-wider font-extrabold block mb-2">Preferred CRIB Payment Route</span>
                     <div className="grid grid-cols-2 gap-2 text-xs font-mono">
                       {[
-                        { name: 'Apple Pay' as const, label: ' Pay' },
+                        { name: 'Apple Pay' as const, label: 'Apple Pay' },
                         { name: 'CashApp' as const, label: '$ CashApp' },
                         { name: 'Zelle' as const, label: 'Zelle Pay' },
                         { name: 'Cash' as const, label: 'Cash On Deliver' }
