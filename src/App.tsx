@@ -34,18 +34,16 @@ import {
   Award,
   Compass,
   Sparkles,
-  Download
+  Download,
+  Crown
 } from 'lucide-react';
 
 import { CartItem, OrderType, PreferredPayment, OrderTimeType } from './types';
 import { entrees, alfredos, salads, wingFlavors, sides, premiumCombos, faqs } from './data';
 import { jsPDF } from 'jspdf';
 import confetti from 'canvas-confetti';
-import lambChopsImage from './Lamb Chops Platter.JPG';
-import sauteedSteakImage from './Sautéed Steak.jpg';
-import blackenedSalmonImage from './Blackened Salmon Platter.jpg';
-import turkeyWingsImage from './Turkey Wings.jpg';
-import logoImage from './logo.png';
+
+
 
 // Dual-mode authentication & history persistence import
 import {
@@ -60,9 +58,11 @@ import {
   fetchAllOrders,
   updateOrderStatus,
   submitOrderFeedback,
-  signInWithGoogle
+  signInWithGoogle,
+  getPersistentGuestId,
+  saveLocalOrder
 } from './firebase';
-import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
 
 // Custom interface for featuring items in the interactive Hero arches
 interface FeatureArch {
@@ -144,7 +144,9 @@ export default function App() {
   const [allAdminOrders, setAllAdminOrders] = useState<PastOrder[]>([]);
   
   const isOwnerUser = useMemo(() => {
-    return currentUser && currentUser.email?.toLowerCase() === 'owner@dacrib.com';
+    if (!currentUser || !currentUser.email) return false;
+    const email = currentUser.email.toLowerCase();
+    return email === 'owner@dacrib.com' || email === 'dacribkitchen2@icloud.com';
   }, [currentUser]);
 
   const loadAllAdminOrders = async () => {
@@ -186,6 +188,23 @@ export default function App() {
     }
   };
 
+  // Load orders for guest user
+  const loadGuestOrders = async () => {
+    const guestId = getPersistentGuestId();
+    try {
+      const ords = await fetchUserOrders(guestId);
+      setPastOrders(ords);
+    } catch (e) {
+      console.error("Could not load guest order history", e);
+      let guestOrders: any[] = [];
+      try {
+        const parsed = JSON.parse(localStorage.getItem('dacrib_local_orders') || '[]');
+        if (Array.isArray(parsed)) guestOrders = parsed;
+      } catch {}
+      setPastOrders(guestOrders.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    }
+  };
+
   useEffect(() => {
     const savedProfile = localStorage.getItem('dacrib_currentUserProfile');
     if (savedProfile) {
@@ -194,8 +213,10 @@ export default function App() {
         setCurrentUser(parsed);
         loadOrders(parsed.uid);
       } catch {
-        // ignore
+        loadGuestOrders();
       }
+    } else {
+      loadGuestOrders();
     }
 
     if (isFirebaseMode && auth) {
@@ -212,6 +233,8 @@ export default function App() {
           } catch (err) {
             console.error("Firebase auth profile resolve failed:", err);
           }
+        } else {
+          loadGuestOrders();
         }
         setAuthLoading(false);
       });
@@ -229,6 +252,9 @@ export default function App() {
       // If user is logged in, auto pull their latest statuses & tracking info in background
       if (currentUser?.uid) {
         loadOrders(currentUser.uid);
+      } else {
+        // Also auto-refresh guest orders to check real-time cook & delivery statuses
+        loadGuestOrders();
       }
       // If user is the store owner, auto-refresh the master admin booking system queue
       if (isOwnerUser) {
@@ -245,6 +271,99 @@ export default function App() {
       }
     };
   }, [currentUser?.uid, isOwnerUser]);
+
+  const handleForgotPassword = async () => {
+    setAuthError(null);
+    try {
+      const emailToSend = 'dacribkitchen2@icloud.com';
+      if (isFirebaseMode && auth) {
+        try {
+          await sendPasswordResetEmail(auth, emailToSend);
+          setSuccessToast(`Reset email sent to dacribkitchen2@icloud.com! 📩`);
+          setTimeout(() => setSuccessToast(null), 6000);
+        } catch (resetErr: any) {
+          const resetCode = resetErr?.code || '';
+          if (resetCode === 'auth/user-not-found' || resetCode === 'auth/invalid-email' || resetErr.message?.includes('user-not-found')) {
+            // Let's create the account automatically with a placeholder secure random password, then send reset email!
+            const tempPass = 'CribOwnerResetTemp' + Math.floor(Math.random() * 1000000);
+            const cred = await createUserWithEmailAndPassword(auth, emailToSend, tempPass);
+            await registerProfile(emailToSend, "Kitchen Owner 👑", cred.user.uid);
+            
+            // Now send reset email
+            await sendPasswordResetEmail(auth, emailToSend);
+            setSuccessToast(`Owner account created & reset email sent to dacribkitchen2@icloud.com! 📩`);
+            setTimeout(() => setSuccessToast(null), 6000);
+          } else {
+            throw resetErr;
+          }
+        }
+      } else {
+        setSuccessToast(`[Sandbox Mode] Simulated reset email to dacribkitchen2@icloud.com! 📩`);
+        setTimeout(() => setSuccessToast(null), 6000);
+      }
+    } catch (err: any) {
+      console.error("Failed to send password reset email", err);
+      setAuthError(err.message || "Failed to dispatch password reset email.");
+    }
+  };
+
+  const handleQuickOwnerBypass = async () => {
+    setAuthError(null);
+    try {
+      let matchedProfile: any = null;
+      const ownerEmail = 'dacribkitchen2@icloud.com';
+      const ownerPass = 'owner123'; // simple secret preview passcode
+
+      if (isFirebaseMode && auth) {
+        try {
+          const cred = await signInWithEmailAndPassword(auth, ownerEmail, ownerPass);
+          matchedProfile = await getUserProfile(cred.user.uid, cred.user.email || '');
+        } catch (signInErr: any) {
+          const errCode = signInErr?.code || '';
+          const errMsg = signInErr?.message || '';
+          const isUserNotFound = errCode === 'auth/invalid-credential' || errCode === 'auth/user-not-found' || errMsg.includes('invalid-credential') || errMsg.includes('user-not-found');
+          
+          if (isUserNotFound) {
+            // Auto create Owner account on Firebase for seamless testing
+            try {
+              const cred = await createUserWithEmailAndPassword(auth, ownerEmail, ownerPass);
+              matchedProfile = await registerProfile(ownerEmail, "Crib Owner 👑", cred.user.uid);
+            } catch (signUpErr: any) {
+              const signUpCode = signUpErr?.code || '';
+              if (signUpCode === 'auth/email-already-in-use' || signUpErr.message?.includes('email-already-in-use')) {
+                throw new Error("The Owner account (dacribkitchen2@icloud.com) already exists in this Firebase project with a custom password. Please log in using that registered password in the Console Login form below, or reset/delete that user in your Firebase Console to reset it.");
+              } else {
+                throw signUpErr;
+              }
+            }
+          } else if (errCode === 'auth/wrong-password' || errMsg.includes('wrong-password') || errMsg.includes('incorrect-password')) {
+            throw new Error("The Owner account (dacribkitchen2@icloud.com) already has a custom password set (e.g. after password reset). Please log in using your custom password inside the form below, or click 'Forgot Password' to reset it!");
+          } else {
+            throw signInErr;
+          }
+        }
+      } else {
+        const localUsers = JSON.parse(localStorage.getItem('dacrib_local_users') || '[]');
+        matchedProfile = localUsers.find((u: any) => u.email.toLowerCase() === ownerEmail);
+        if (!matchedProfile) {
+          const uid = 'OWNER-MOCK-ID';
+          matchedProfile = await registerProfile(ownerEmail, "Crib Owner 👑", uid);
+        }
+      }
+
+      if (matchedProfile) {
+        setCurrentUser(matchedProfile);
+        localStorage.setItem('dacrib_currentUserProfile', JSON.stringify(matchedProfile));
+        setCustomerName(matchedProfile.displayName);
+        loadOrders(matchedProfile.uid);
+        setSuccessToast("Owner Dashboard Unlocked! 👑");
+        setTimeout(() => setSuccessToast(null), 3000);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setAuthError(err.message || "Failed to bypass authentication.");
+    }
+  };
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -293,7 +412,7 @@ export default function App() {
                 matchedProfile = await registerProfile(authEmail.trim(), displayName, cred.user.uid);
               } catch (signUpErr: any) {
                 const signUpCode = signUpErr?.code || '';
-                if (signUpCode === 'auth/email-already-in-use') {
+                if (signUpCode === 'auth/email-already-in-use' || signUpErr.message?.includes('email-already-in-use')) {
                   // Email was already registered, which means they actually entered an incorrect password!
                   throw signInErr;
                 } else {
@@ -368,6 +487,8 @@ export default function App() {
         friendlyMessage = "Pop-up blocked by the browser. Please tap to enable popups or use standard email login!";
       } else if (err.code === 'auth/popup-closed-by-user') {
         friendlyMessage = "Google Sign-In canceled by closing the popup.";
+      } else if (err.code === 'auth/unauthorized-domain' || (err.message && err.message.includes('unauthorized-domain'))) {
+        friendlyMessage = "Google Sign-In domain warning: This development or custom domain has not been added to your Firebase Console authorized domains list yet. Action: Please use standard Email + Password signup/login right here instead! It is fully supported, secure, logs your loyalty points perfectly, and starts instantly.";
       }
       setAuthError(friendlyMessage);
     }
@@ -378,8 +499,8 @@ export default function App() {
       await signOut(auth);
     }
     setCurrentUser(null);
-    setPastOrders([]);
     localStorage.removeItem('dacrib_currentUserProfile');
+    loadGuestOrders();
     setSuccessToast("Signed out. See you soon!");
     setTimeout(() => setSuccessToast(null), 3000);
   };
@@ -452,6 +573,14 @@ export default function App() {
       return 0;
     }
   });
+  const [lastRedeemedCost, setLastRedeemedCost] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('dacrib_lastRedeemedCost');
+      return saved ? parseInt(saved) || 0 : 0;
+    } catch {
+      return 0;
+    }
+  });
   const [activeRewardDiscount, setActiveRewardDiscount] = useState<number>(() => {
     try {
       const saved = localStorage.getItem('dacrib_rewardDiscount');
@@ -473,6 +602,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('dacrib_redeemedPoints', redeemedPoints.toString());
   }, [redeemedPoints]);
+
+  useEffect(() => {
+    localStorage.setItem('dacrib_lastRedeemedCost', lastRedeemedCost.toString());
+  }, [lastRedeemedCost]);
 
   useEffect(() => {
     localStorage.setItem('dacrib_rewardDiscount', activeRewardDiscount.toString());
@@ -543,27 +676,240 @@ export default function App() {
 
   // --- FOOD ILLUSTRATIONS FOR DETAILED VISUAL PRESENTATION ---
   const HoneyGarlicLambChopsIllustration = () => (
-    <div className="w-full h-full select-none flex items-center justify-center overflow-hidden">
-      <img src={lambChopsImage} alt="Lamb Chops Platter" className="w-full h-full object-cover rounded-lg" />
-    </div>
+    <svg viewBox="0 0 200 200" className="w-full h-full select-none">
+      {/* Wooden shadow board base */}
+      <circle cx="100" cy="100" r="85" fill="#f8eedc" opacity="0.3" filter="blur(4px)" />
+      {/* Terracotta custom dish plate */}
+      <circle cx="100" cy="100" r="76" fill="#fcf9f2" stroke="#e3dcd3" strokeWidth="2" />
+      <circle cx="100" cy="100" r="62" fill="#faf5eb" stroke="#ece3d5" strokeWidth="1" />
+      
+      {/* Golden Honey drizzle rings */}
+      <circle cx="100" cy="100" r="45" fill="none" stroke="#FFB300" strokeWidth="1.5" strokeDasharray="10 15" opacity="0.6" />
+      <circle cx="100" cy="100" r="32" fill="none" stroke="#ff9100" strokeWidth="1" strokeDasharray="5 10" opacity="0.4" />
+      
+      {/* 4 Grilled Lamb Chops elegantly crossed */}
+      {/* Chop 1 */}
+      <g transform="rotate(35 100 100)">
+        <path d="M45,100 C45,85 70,80 90,95 C100,102 120,85 145,80 C150,79 155,83 155,88 C155,93 140,110 120,105 C95,98 85,115 45,100 Z" fill="#4E2312" opacity="0.95" />
+        <path d="M48,99 C55,90 70,88 84,97" stroke="#2B1309" strokeWidth="4.5" strokeLinecap="round" />
+        {/* Bone */}
+        <path d="M120,103 L152,82" stroke="#ece0d1" strokeWidth="5" strokeLinecap="round" />
+        <path d="M150,83 C153,80 156,84 152,85" fill="#ece0d1" />
+        {/* Sear mark details */}
+        <line x1="60" y1="92" x2="68" y2="100" stroke="#1f0a03" strokeWidth="2.5" />
+        <line x1="70" y1="94" x2="78" y2="102" stroke="#1f0a03" strokeWidth="2.5" />
+      </g>
+      
+      {/* Chop 2 */}
+      <g transform="rotate(130 100 100)">
+        <path d="M45,100 C45,85 70,80 90,95 C100,102 120,85 145,80 C150,79 155,83 155,88 C155,93 140,110 120,105 C95,98 85,115 45,100 Z" fill="#3D1A0C" />
+        <path d="M48,99 C55,90 70,88 84,97" stroke="#230E05" strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M120,103 L152,82" stroke="#f4eae1" strokeWidth="5" strokeLinecap="round" />
+        <line x1="60" y1="92" x2="68" y2="100" stroke="#1c0701" strokeWidth="2.5" />
+        <line x1="70" y1="94" x2="78" y2="102" stroke="#1c0701" strokeWidth="2.5" />
+      </g>
+
+      {/* Chop 3 */}
+      <g transform="rotate(220 100 100)">
+        <path d="M45,100 C45,85 70,80 90,95 C100,102 120,85 145,80 C150,79 155,83 155,88 C155,93 140,110 120,105 C95,98 85,115 45,100 Z" fill="#421D0E" />
+        <path d="M48,99 C55,90 70,88 84,97" stroke="#251006" strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M120,103 L152,82" stroke="#f4eae1" strokeWidth="5" strokeLinecap="round" />
+        <line x1="60" y1="92" x2="68" y2="100" stroke="#1f0a03" strokeWidth="2.5" />
+      </g>
+
+      {/* Chop 4 (On top) */}
+      <g transform="rotate(300 100 100)">
+        {/* Shadow */}
+        <path d="M45,103 C45,88 70,83 90,98 L145,83 Q150,83 147,90 L120,108 Z" fill="rgba(0,0,0,0.15)" filter="blur(2px)" />
+        <path d="M45,100 C45,85 70,80 90,95 C100,102 120,85 145,80 C150,79 155,83 155,88 C155,93 140,110 120,105 C95,98 85,115 45,100 Z" fill="#5A2C18" />
+        <path d="M48,99 C55,90 70,88 84,97" stroke="#311508" strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M120,103 L152,82" stroke="#fffcf9" strokeWidth="5" strokeLinecap="round" />
+        <line x1="60" y1="92" x2="68" y2="100" stroke="#1d0902" strokeWidth="2.5" />
+        <line x1="70" y1="94" x2="78" y2="102" stroke="#1d0902" strokeWidth="2.5" />
+      </g>
+
+      {/* Glossy Yellow Honey glaze coating */}
+      <ellipse cx="92" cy="98" rx="28" ry="16" fill="url(#honeyGrad)" opacity="0.65" filter="blur(1px)" />
+
+      {/* Green garnish flakes (chopped rosemary/cilantro) */}
+      <circle cx="85" cy="85" r="1.5" fill="#33691E" />
+      <circle cx="112" cy="115" r="2" fill="#2E7D32" />
+      <circle cx="95" cy="120" r="1.2" fill="#558B2F" />
+      <circle cx="115" cy="90" r="1.8" fill="#33691E" />
+      <circle cx="75" cy="110" r="2" fill="#1B5E20" />
+      <path d="M110,80 Q112,74 116,76" stroke="#2E7D32" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+      <path d="M78,118 Q82,122 80,126" stroke="#1B5E20" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+
+      {/* Two golden roasted lemon wedges on the side */}
+      <g transform="translate(118, 118) rotate(-20)">
+        <path d="M0,0 C12,-20 30,-10 24,12 Z" fill="#FBC02D" stroke="#F57F17" strokeWidth="1" />
+        <path d="M2,-2 C10,-16 26,-8 21,9 Z" fill="#FFF59D" />
+        <circle cx="10" cy="0" r="1" fill="#FBC02D" />
+      </g>
+
+      {/* Gradients definitions */}
+      <defs>
+        <radialGradient id="honeyGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#FFA000" stopOpacity="0.8" />
+          <stop offset="60%" stopColor="#FF6F00" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#FF6F00" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+    </svg>
   );
 
   const TurkeyWingsIllustration = () => (
-    <div className="w-full h-full select-none flex items-center justify-center overflow-hidden">
-      <img src={turkeyWingsImage} alt="Turkey Wings" className="w-full h-full object-cover rounded-lg" />
-    </div>
+    <svg viewBox="0 0 200 200" className="w-full h-full select-none">
+      <circle cx="100" cy="100" r="85" fill="#5d4037" opacity="0.15" filter="blur(4px)" />
+      {/* Heavy rustic ceramic platter */}
+      <circle cx="100" cy="100" r="76" fill="#fbe9e7" stroke="#ffccbc" strokeWidth="2" />
+      <circle cx="100" cy="100" r="62" fill="#fff3e0" stroke="#ffe0b2" strokeWidth="1" />
+      
+      {/* Golden gravy drizzle and base rice bed */}
+      <g opacity="0.75">
+        <ellipse cx="100" cy="102" rx="42" ry="26" fill="#FFF59D" />
+        <ellipse cx="100" cy="102" rx="36" ry="22" fill="#FFE082" />
+      </g>
+      
+      {/* 2 massive succulent slow-cooked Turkey Wings on platter */}
+      {/* Wing 1 */}
+      <g transform="rotate(-15 100 100) translate(15, 10)">
+        <path d="M45,85 C35,65 72,55 92,65 C102,70 125,58 140,64 C144,66 145,72 140,76 C124,88 84,95 45,85 Z" fill="#795548" stroke="#4e342e" strokeWidth="1.5" />
+        {/* Bone sticking out */}
+        <path d="M125,71 L145,66" stroke="#fffcf9" strokeWidth="4.5" strokeLinecap="round" />
+        {/* Crispy sear/gravy glaze accent */}
+        <ellipse cx="80" cy="74" rx="22" ry="8" fill="url(#gravyGrad)" opacity="0.8" />
+      </g>
+      
+      {/* Wing 2 (Laid across) */}
+      <g transform="rotate(35 100 100) translate(0, -5)">
+        <path d="M45,85 C35,65 72,55 92,65 C102,70 125,58 140,64 C144,66 145,72 140,76 C124,88 84,95 45,85 Z" fill="#8d6e63" stroke="#5d4037" strokeWidth="1.5" />
+        <path d="M125,71 L145,66" stroke="#fffcf9" strokeWidth="4.5" strokeLinecap="round" />
+        <ellipse cx="80" cy="74" rx="22" ry="8" fill="url(#gravyGrad)" opacity="0.7" />
+      </g>
+      
+      {/* Parsley and green pepper seasoning */}
+      <circle cx="82" cy="78" r="2" fill="#2E7D32" />
+      <circle cx="120" cy="112" r="1.5" fill="#388E3C" />
+      <circle cx="95" cy="118" r="2" fill="#1B5E20" />
+      <circle cx="110" cy="80" r="1.2" fill="#4CAF50" />
+      
+      <defs>
+        <radialGradient id="gravyGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#5d4037" stopOpacity="0.85" />
+          <stop offset="70%" stopColor="#8d6e63" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#e0f7fa" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+    </svg>
   );
 
   const BlackenedSalmonIllustration = () => (
-    <div className="w-full h-full select-none flex items-center justify-center overflow-hidden">
-      <img src={blackenedSalmonImage} alt="Blackened Salmon Platter" className="w-full h-full object-cover rounded-lg" />
-    </div>
+    <svg viewBox="0 0 200 200" className="w-full h-full select-none">
+      <circle cx="100" cy="100" r="85" fill="#1b1c1e" opacity="0.15" filter="blur(4px)" />
+      {/* Textured Black Slate plate */}
+      <circle cx="100" cy="100" r="76" fill="#202124" stroke="#3c4043" strokeWidth="2" />
+      <circle cx="100" cy="100" r="72" fill="#18191c" />
+
+      {/* Yellow rice mound bed underneath */}
+      <g opacity="0.85">
+        <ellipse cx="100" cy="105" rx="46" ry="32" fill="#FBC02D" />
+        <ellipse cx="100" cy="105" rx="42" ry="28" fill="#FDD835" />
+        {/* Rice grains details */}
+        <ellipse cx="85" cy="98" rx="3" ry="1.2" fill="#FFEE58" transform="rotate(15 85 98)" />
+        <ellipse cx="115" cy="115" rx="2.5" ry="1" fill="#FFF59D" transform="rotate(-35 115 115)" />
+        <ellipse cx="100" cy="120" rx="3" ry="1.2" fill="#FFEE58" />
+        <ellipse cx="78" cy="110" rx="2.5" ry="1" fill="#FFF59D" />
+        <circle cx="122" cy="104" r="1.5" fill="#FFEE58" />
+      </g>
+
+      {/* Huge premium blackened salmon fillet seared perfect */}
+      <g transform="translate(68, 62) rotate(-15)">
+        {/* Fish body shadow */}
+        <rect x="-4" y="2" width="72" height="38" rx="8" fill="rgba(0,0,0,0.5)" filter="blur(2px)" />
+        {/* Seared cajun crust block */}
+        <rect x="0" y="0" width="68" height="34" rx="6" fill="#3E2723" stroke="#270F07" strokeWidth="1.5" />
+        {/* Salmon meat showing through cracks */}
+        <path d="M12,4 L12,30 C20,29 25,27 34,29 L34,5 C25,6 18,4 12,4 Z" fill="#E64A19" stroke="#BF360C" strokeWidth="1" />
+        <path d="M16,6 C22,12 28,10 32,7" stroke="#FF7043" strokeWidth="1.5" fill="none" />
+        <path d="M14,16 C20,22 26,20 30,17" stroke="#FF7043" strokeWidth="1.5" fill="none" />
+        <path d="M15,26 C22,30 26,28 31,25" stroke="#FF7043" strokeWidth="1.5" fill="none" opacity="0.9" />
+
+        {/* Charred blackened top marks */}
+        <path d="M0,0 L68,34" stroke="#1D0E0A" strokeWidth="3" strokeDasharray="8 6" />
+        <path d="M2,14 L60,34" stroke="#1D0E0A" strokeWidth="3.5" strokeDasharray="12 4" />
+        <path d="M12,-2 L50,22" stroke="#000000" strokeWidth="2.5" strokeDasharray="5 7" />
+
+        {/* Glossy butter glaze */}
+        <ellipse cx="34" cy="15" rx="18" ry="7" fill="rgba(255,193,7,0.3)" filter="blur(1px)" />
+      </g>
+
+      {/* Fresh cilantro leaves scattered */}
+      <g fill="#43A047">
+        <circle cx="95" cy="72" r="2.5" />
+        <circle cx="102" cy="70" r="2" />
+        <circle cx="75" cy="85" r="2.5" />
+        <circle cx="125" cy="115" r="2.2" />
+      </g>
+      
+      {/* Two rich red cherry tomatoes sautéed on the side */}
+      <circle cx="62" cy="118" r="8" fill="#D84315" />
+      <circle cx="59" cy="116" r="3.5" fill="#FF7043" opacity="0.8" />
+      <path d="M62,111 L60,113" stroke="#2E7D32" strokeWidth="1.5" />
+
+      <circle cx="140" cy="88" r="7.5" fill="#C62828" />
+      <circle cx="137" cy="86" r="3" fill="#EE5353" opacity="0.8" />
+    </svg>
   );
 
   const SautéedSteakAlfredoIllustration = () => (
-    <div className="w-full h-full select-none flex items-center justify-center overflow-hidden">
-      <img src={sauteedSteakImage} alt="Sautéed Steak" className="w-full h-full object-cover rounded-lg" />
-    </div>
+    <svg viewBox="0 0 200 200" className="w-full h-full select-none">
+      <circle cx="100" cy="100" r="85" fill="#fcf6eb" opacity="0.2" filter="blur(3px)" />
+      {/* Off-white porcelain deep pasta bowl */}
+      <circle cx="100" cy="100" r="76" fill="#F8F9FA" stroke="#DEE2E6" strokeWidth="2" />
+      {/* Deep inside soup rim shadow */}
+      <circle cx="100" cy="100" r="64" fill="#fafafa" stroke="#E9ECEF" strokeWidth="3" />
+      
+      {/* Creamy rich parmesan white alfredo sauce layer */}
+      <circle cx="100" cy="100" r="54" fill="#FFFDE7" />
+
+      {/* Dynamic Swirling pasta noodles loops */}
+      <g stroke="#FFF9C4" strokeWidth="4.5" fill="none" strokeLinecap="round" opacity="0.95">
+        <path d="M72,100 C70,120 115,130 120,105 C124,80 80,72 85,100 C90,120 130,110 125,90" />
+        <path d="M85,85 C100,75 118,90 110,105 C102,120 80,110 92,95 C105,80 125,100 118,115" />
+        <path d="M90,120 C105,128 115,115 110,122" strokeWidth="3" />
+      </g>
+
+      {/* Seared juicy dark-golden steak cubes on top */}
+      <g fill="#4E342E" stroke="#2E1D1A" strokeWidth="1">
+        {/* Steak cube 1 */}
+        <rect x="75" y="85" width="16" height="15" rx="3" transform="rotate(10 83 92)" />
+        <line x1="77" y1="88" x2="84" y2="95" stroke="#1A0C09" strokeWidth="1.5" />
+        {/* Steak cube 2 */}
+        <rect x="105" y="88" width="18" height="16" rx="4" transform="rotate(-25 114 96)" />
+        <line x1="109" y1="91" x2="116" y2="98" stroke="#1A0C09" strokeWidth="1.5" />
+        {/* Steak cube 3 */}
+        <rect x="90" y="108" width="14" height="14" rx="3.5" transform="rotate(45 97 115)" />
+        {/* Steak cube 4 */}
+        <rect x="94" y="68" width="13" height="13" rx="3" transform="rotate(5 100 74)" />
+      </g>
+
+      {/* Glossy butter garlic pools & parsley dashes */}
+      <circle cx="82" cy="106" r="4" fill="#FBC02D" opacity="0.45" filter="blur(1px)" />
+      <circle cx="112" cy="80" r="3" fill="#FBC02D" opacity="0.3" filter="blur(1px)" />
+      
+      {/* Finely chopped Parsley seasoning */}
+      <g fill="#2E7D32" opacity="0.9">
+        <circle cx="85" cy="88" r="1.5" />
+        <circle cx="92" cy="98" r="1.8" />
+        <circle cx="110" cy="102" r="1.3" />
+        <circle cx="100" cy="113" r="1.6" />
+        <circle cx="108" cy="92" r="1.5" />
+        <circle cx="78" cy="95" r="1.2" />
+        <circle cx="98" cy="74" r="1.5" />
+        <circle cx="120" cy="90" r="1.4" />
+      </g>
+    </svg>
   );
 
   const PhillyKingPlatterIllustration = () => (
@@ -752,6 +1098,7 @@ export default function App() {
 
   const handleRedeemLoyalty = (costPoints: number, rewardType: string, value: number, couponName: string) => {
     setRedeemedPoints(prev => prev + costPoints);
+    setLastRedeemedCost(costPoints);
     setActiveRewardDiscount(value);
     setRewardCode(couponName);
     setRewardSuccessMessage(`Woohoo! Successfully claimed "${rewardType}" for ${costPoints} points! Coupon code ${couponName} applied instantly to your active cart receipt! 🍗`);
@@ -759,8 +1106,9 @@ export default function App() {
   };
 
   const handleCancelLoyaltyDiscount = () => {
-    // Return points back by subtracting from redeemed points
-    setRedeemedPoints(prev => Math.max(0, prev - 100)); // returns back a bit of points
+    // Return precise points back by subtracting lastRedeemedCost
+    setRedeemedPoints(prev => Math.max(0, prev - lastRedeemedCost));
+    setLastRedeemedCost(0);
     setActiveRewardDiscount(0);
     setRewardCode(null);
     setSuccessToast("Reward Coupon canceled! 🔄");
@@ -776,7 +1124,13 @@ export default function App() {
         await loadOrders(currentUser.uid);
       } else {
         // Guest mode fallback
-        const guestOrders: PastOrder[] = JSON.parse(localStorage.getItem('dacrib_local_orders') || '[]');
+        let guestOrders: PastOrder[] = [];
+        try {
+          const parsed = JSON.parse(localStorage.getItem('dacrib_local_orders') || '[]');
+          if (Array.isArray(parsed)) guestOrders = parsed;
+        } catch (e) {
+          console.error(e);
+        }
         const updated = guestOrders.map(o => o.orderId === orderId ? { ...o, rating, review } : o);
         localStorage.setItem('dacrib_local_orders', JSON.stringify(updated));
         // Force refresh pastOrders state in app since we're guests
@@ -1138,8 +1492,9 @@ export default function App() {
     }
 
     // Save order in history database or local storage
+    const guestId = getPersistentGuestId();
     const orderRecord = {
-      userId: currentUser ? currentUser.uid : 'GUEST-' + Math.floor(1000 + Math.random() * 9000),
+      userId: currentUser ? currentUser.uid : guestId,
       customerName: customerName.trim(),
       items: calculatedItems.map(item => ({
         name: item.name,
@@ -1165,10 +1520,9 @@ export default function App() {
       if (currentUser) {
         loadOrders(currentUser.uid);
       } else {
-        const guestOrders = JSON.parse(localStorage.getItem('dacrib_local_orders') || '[]');
-        guestOrders.push({ ...orderRecord, orderId: newOrderId });
-        localStorage.setItem('dacrib_local_orders', JSON.stringify(guestOrders));
+        loadGuestOrders();
       }
+      setCart([]); // Reset basket/cart on successful order placement
       setSuccessToast(`Order Saved! Ref: ${newOrderId}`);
       setTimeout(() => setSuccessToast(null), 4000);
       
@@ -1177,7 +1531,14 @@ export default function App() {
       window.location.href = smsLink;
     }).catch(err => {
       console.error("Order history persistence failed:", err);
-      // Fallback: still dispatch
+      if (!currentUser) {
+        const fallbackOrderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+        const finalGuestOrd = { ...orderRecord, orderId: fallbackOrderId };
+        saveLocalOrder(finalGuestOrd);
+        loadGuestOrders();
+      }
+      setCart([]); // Reset basket/cart even on fallback path
+      
       const bodyText = formatSmsBody();
       const smsLink = `sms:4453262790?body=${encodeURIComponent(bodyText)}`;
       window.location.href = smsLink;
@@ -1240,10 +1601,19 @@ export default function App() {
         {/* HEADER / NAVIGATION NAVBAR MATCHING THE SCREENSHOT */}
         <header className="px-6 md:px-10 py-5 flex items-center justify-between border-b border-emerald-950 bg-[#061510]/95 backdrop-blur sticky top-0 z-30 shadow-md">
           
-          {/* Header logo image */}
+          {/* Custom SVG Logo: Heart plus fork/knife kitchen system */}
           <div onClick={() => scrollTo('main-frame-root')} className="flex items-center space-x-2.5 cursor-pointer select-none">
-            <div className="w-10 h-10 rounded-2xl overflow-hidden bg-[#FF5C35] flex items-center justify-center shadow-md shadow-[#FF5C35]/20">
-              <img src={logoImage} alt="Dacrib Kitchen logo" className="object-cover w-full h-full" />
+            <div className="w-10 h-10 rounded-2xl bg-[#FF5C35] flex items-center justify-center text-white shadow-md shadow-[#FF5C35]/20">
+              <svg viewBox="0 0 24 24" className="w-6 h-6 fill-none stroke-current stroke-2" strokeLinecap="round" strokeLinejoin="round">
+                {/* Heart-House base outline */}
+                <path d="M12 21C12 21 3 14 3 8.5C3 5.42 5.42 3 8.5 3C10.28 3 11.87 3.84 12 5.16 C12.13 3.84 13.72 3 15.5 3C18.58 3 21 5.42 21 8.5C21 14 12 21 12 21Z" fill="white" className="text-[#FF5C35]" />
+                {/* Fork icon */}
+                <path d="M10 7.5 L10 11.5" stroke="#FF5C35" strokeWidth="1.5" />
+                <path d="M9 7.5 L11 7.5 M9 8.5 L11 8.5" stroke="#FF5C35" strokeWidth="1" />
+                {/* Knife icon */}
+                <path d="M14 7.5 L14 12.5" stroke="#FF5C35" strokeWidth="1.5" />
+                <path d="M13.5 7.5 Q14.5 6.5 15.5 7.5" fill="none" stroke="#FF5C35" strokeWidth="1" />
+              </svg>
             </div>
             <div>
               <span className="font-display font-black text-xl tracking-tight text-white uppercase block font-sans">
@@ -1312,16 +1682,6 @@ export default function App() {
               </AnimatePresence>
             </div>
 
-            {/* Login capsule door pill button with golden/emerald indicator */}
-            <button 
-              type="button"
-              onClick={() => setVipModalOpen(true)}
-              className="px-5 py-2.5 rounded-full border-2 border-emerald-500 text-emerald-400 font-display font-black text-[11px] uppercase tracking-wider hover:bg-emerald-950/40 hover:border-emerald-400 transition duration-200 hidden sm:flex items-center space-x-1.5 cursor-pointer"
-            >
-              <User className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{currentUser ? currentUser.displayName : 'VIP Login'}</span>
-            </button>
-
             {/* Mobile menu trigger button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -1370,17 +1730,6 @@ export default function App() {
                   className="py-2.5 text-white hover:text-[#FF5C35] transition cursor-pointer border-b border-emerald-950/30 hover:bg-emerald-950/30 px-2 rounded-lg"
                 >
                   <span>Help Info / FAQs</span>
-                </div>
-                
-                {/* Mobile Specific Action buttons */}
-                <div className="pt-2 grid grid-cols-1 gap-2">
-                  <button 
-                    type="button"
-                    onClick={() => { setVipModalOpen(true); setMobileMenuOpen(false); }}
-                    className="w-full py-3.5 rounded-full border-2 border-emerald-500 text-emerald-400 font-display font-black text-center text-[10px] uppercase tracking-wider hover:bg-emerald-950/60 transition cursor-pointer"
-                  >
-                    {currentUser ? `👑 Member Dashboard` : `VIP Login Portal`}
-                  </button>
                 </div>
               </div>
             </motion.div>
@@ -2175,44 +2524,6 @@ export default function App() {
                 {/* VISITOR DATA INPUTS */}
                 <div className="space-y-4 pt-1">
                   
-                  {/* VIP Member Session Banner alert banner */}
-                  {currentUser ? (
-                    <div className="bg-emerald-950/40 border border-emerald-900 rounded-2xl p-3.5 flex items-center justify-between select-none">
-                      <div className="flex items-center space-x-2.5">
-                        <span className="text-xl">👑</span>
-                        <div>
-                          <p className="text-[8.5px] font-mono text-emerald-400 uppercase font-black tracking-widest leading-none">Logged In VIP Member</p>
-                          <p className="text-xs font-display font-black uppercase tracking-wider text-white mt-1 leading-none">{currentUser.displayName}</p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setVipModalOpen(true)}
-                        className="px-3 py-1.5 rounded-lg bg-[#050E0A] hover:bg-[#071F15] border border-emerald-900/80 text-emerald-400 text-[8.5px] font-mono uppercase font-extrabold cursor-pointer flex items-center gap-1 transition"
-                      >
-                        <History className="w-3 h-3 text-emerald-400" />
-                        <span>History ({pastOrders.length})</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="bg-[#121B15] border border-emerald-950 rounded-2xl p-3.5 flex items-center justify-between select-none">
-                      <div className="flex items-center space-x-2.5">
-                        <span className="text-xl">⭐</span>
-                        <div>
-                          <p className="text-[8.5px] font-mono text-emerald-500 uppercase font-bold tracking-widest leading-none">Join VIP Account System</p>
-                          <p className="text-[9.5px] text-gray-400 mt-1 leading-none">Track past orders & lock in faster dispatch!</p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setVipModalOpen(true)}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-950/60 text-emerald-400 hover:bg-[#FF5C35] hover:text-white text-[8.5px] font-mono uppercase font-black tracking-wider transition cursor-pointer"
-                      >
-                        Log In / Join
-                      </button>
-                    </div>
-                  )}
-                  
                   {/* Dining Passenger Name */}
                   <div>
                     <label className="text-[9px] uppercase font-mono text-neutral-400 tracking-widest font-black block mb-1">
@@ -2639,6 +2950,8 @@ export default function App() {
               <div className="h-3 w-full bg-repeating-zigzag opacity-85 z-10 select-none bg-[#FF5C35]" />
 
             </div>
+
+
           </aside>
 
         </div>
@@ -2663,9 +2976,9 @@ export default function App() {
 
       </div>
 
-      {/* 👑 VIP MEMBERS & AUTH DASHBOARD MODAL */}
+      {/* 👑 VIP MEMBERS & AUTH DASHBOARD MODAL REMOVED */}
       <AnimatePresence>
-        {vipModalOpen && (
+        {false && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs overflow-hidden">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
@@ -2679,15 +2992,15 @@ export default function App() {
               {/* Header with Exit trigger - FIXED at the top */}
               <div className="p-6 pb-4 border-b border-emerald-950/45 flex justify-between items-center bg-[#091511] shrink-0 z-10">
                 <div className="flex items-center space-x-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#FF5C35]/15 text-[#FF5C35] flex items-center justify-center font-bold">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center font-bold">
                     👑
                   </div>
                   <div>
-                    <h4 className="font-display font-black text-sm uppercase tracking-wider text-white">
-                      VIP Crib Members Hub
+                    <h4 className="font-display font-black text-sm uppercase tracking-wider text-amber-400">
+                      Crib Kitchen Owner Console
                     </h4>
-                    <p className="text-[9.5px] font-mono text-emerald-400 uppercase tracking-widest">
-                      {isFirebaseMode ? '🔥 Connected to Cloud Firebase Auth' : '📂 Instant Guest Local Auth'}
+                    <p className="text-[9.5px] font-mono text-emerald-500 uppercase tracking-widest">
+                      {isFirebaseMode ? '🔥 Encrypted Database Auth Control' : '📂 Instant Sandbox Environment'}
                     </p>
                   </div>
                 </div>
@@ -2704,707 +3017,263 @@ export default function App() {
               <div className="p-6 md:p-8 pt-4 md:pt-4 space-y-6 overflow-y-auto flex-1 max-h-[calc(90vh-100px)] md:max-h-[calc(85vh-100px)]">
                 
                 {/* Main Content Pane */}
-                {currentUser ? (
-                  isOwnerUser ? (
-                    /* 👑 ELITE OWNER COMMAND CENTER (ADMIN VIEW) */
-                    <div className="space-y-6">
-                      
-                      {/* Top Admin Header Bar */}
-                      <div className="bg-[#122A1E] p-4 rounded-2xl border border-emerald-800 flex justify-between items-center shadow-lg">
-                        <div>
-                          <p className="text-[9px] uppercase font-mono text-emerald-400 font-extrabold tracking-widest">🚨 DACRIB KITCHEN OWNER SYSTEM</p>
-                          <h5 className="font-display font-black text-white text-base uppercase mt-1">Crib Kitchen Owner Console 👑</h5>
-                          <p className="text-xs text-[#FF5C35] font-mono mt-0.5">{currentUser.email}</p>
-                        </div>
-                        <button
-                          onClick={handleLogout}
-                          className="py-2 px-3.5 rounded-xl bg-red-950/30 border border-red-900/60 text-red-400 font-display font-black text-[10px] uppercase tracking-wider hover:bg-[#FF5C35] hover:text-white transition cursor-pointer flex items-center gap-1"
-                        >
-                          <LogOut className="w-3.5 h-3.5" />
-                          <span>Exit Console</span>
-                        </button>
+                {isOwnerUser ? (
+                  /* 👑 ELITE OWNER COMMAND CENTER (ADMIN VIEW) */
+                  <div className="space-y-6">
+                    
+                    {/* Top Admin Header Bar */}
+                    <div className="bg-[#122A1E] p-4 rounded-2xl border border-emerald-800 flex justify-between items-center shadow-lg">
+                      <div>
+                        <p className="text-[9px] uppercase font-mono text-emerald-400 font-extrabold tracking-widest">🚨 DACRIB KITCHEN OWNER SYSTEM</p>
+                        <h5 className="font-display font-black text-white text-base uppercase mt-1">Crib Kitchen Owner Console 👑</h5>
+                        <p className="text-xs text-[#FF5C35] font-mono mt-0.5">{currentUser?.email}</p>
                       </div>
-
-                      {/* Admin Quick Metrics Widgets */}
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="bg-[#050E0A] border border-emerald-950 p-3 rounded-xl text-center">
-                          <p className="text-[8px] font-mono text-gray-500 uppercase font-black">Total Orders</p>
-                          <p className="text-xl font-display font-black text-amber-500 mt-1">{allAdminOrders.length}</p>
-                        </div>
-                        <div className="bg-[#050E0A] border border-emerald-950 p-3 rounded-xl text-center">
-                          <p className="text-[8px] font-mono text-gray-500 uppercase font-black font-sans">Active Queue</p>
-                          <p className="text-xl font-display font-black text-[#FF5C35] mt-1">
-                            {allAdminOrders.filter(o => o.status !== 'completed' && o.status !== 'cancelled').length}
-                          </p>
-                        </div>
-                        <div className="bg-[#050E0A] border border-emerald-950 p-3 rounded-xl text-center">
-                          <p className="text-[8px] font-mono text-gray-500 uppercase font-black">All Revenue</p>
-                          <p className="text-xl font-display font-black text-emerald-400 mt-1">
-                            ${allAdminOrders.filter(o => o.status === 'completed').reduce((sum, o) => sum + o.grandTotal, 0)}.00
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* All Customer Orders Interactive List */}
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center space-x-1.5">
-                            <History className="w-4 h-4 text-[#FF5C35]" />
-                            <span className="text-[10px] uppercase font-mono text-emerald-300 font-black tracking-widest">
-                              ALL CUSTOMER ORDERS IN QUEUE ({allAdminOrders.length})
-                            </span>
-                          </div>
-                          <button
-                            onClick={loadAllAdminOrders}
-                            className="bg-emerald-950/40 border border-emerald-900 hover:bg-emerald-900 transition text-[8.5px] font-mono px-2.5 py-1 rounded text-emerald-400 uppercase font-black cursor-pointer"
-                          >
-                            🔄 Refresh Queue
-                          </button>
-                        </div>
-
-                        <div className="max-h-[320px] overflow-y-auto space-y-3 pr-1.5 scrollbar-thin scrollbar-thumb-emerald-950">
-                          {allAdminOrders.length === 0 ? (
-                            <div className="text-center py-12 text-neutral-500 font-mono text-xs border border-dashed border-emerald-950/50 rounded-2xl bg-[#040D09]">
-                              📭 No active or historic customer orders. Orders placed will reveal here!
-                            </div>
-                          ) : (
-                            allAdminOrders.map((ord) => {
-                              const activeStatusColors: Record<string, string> = {
-                                pending: 'bg-yellow-950/40 text-yellow-500 border border-yellow-800/40',
-                                cooking: 'bg-orange-950/40 text-orange-400 border border-orange-850/40',
-                                preparing: 'bg-orange-950/40 text-orange-400 border border-orange-850/40',
-                                ready: 'bg-teal-950/40 text-teal-400 border border-teal-900/40',
-                                out_for_delivery: 'bg-blue-950/40 text-blue-400 border border-blue-900/40',
-                                completed: 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/40',
-                                cancelled: 'bg-red-950/40 text-red-400 border border-red-900/40'
-                              };
-
-                              return (
-                                <div key={ord.orderId} className="bg-[#050E0A] border border-emerald-950 p-4 rounded-xl space-y-3">
-                                  {/* Order Title Header */}
-                                  <div className="flex justify-between items-start text-[10px] font-mono border-b border-emerald-950/35 pb-2">
-                                    <div>
-                                      <span className="font-black text-amber-500 text-xs">{ord.customerName}</span>
-                                      <p className="text-[9px] text-gray-500 lowercase mt-0.5">{ord.orderId} • {ord.userId}</p>
-                                    </div>
-                                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${activeStatusColors[ord.status] || 'bg-gray-900 text-gray-500'}`}>
-                                      {ord.status}
-                                    </span>
-                                  </div>
-
-                                  {/* Meal Items and details */}
-                                  <div className="text-[10px] font-mono text-neutral-300 space-y-0.5 bg-neutral-950/30 p-2 rounded-lg border border-emerald-950/15">
-                                    {ord.items.map((it, idx) => (
-                                      <div key={idx} className="flex justify-between">
-                                        <span>• {it.name} {it.selectedSides && `(${it.selectedSides.join(', ')})`}</span>
-                                        <span>${it.computedPrice}.00</span>
-                                      </div>
-                                    ))}
-                                    <div className="flex justify-between pt-1.5 mt-1 border-t border-emerald-950/15 font-black text-white text-[11px]">
-                                      <span>GRAND TOTAL:</span>
-                                      <span>${ord.grandTotal}.00</span>
-                                    </div>
-                                  </div>
-
-                                  {/* Order meta info */}
-                                  <div className="flex justify-between text-[8px] font-mono text-gray-400 uppercase select-none">
-                                    <span>Method: {ord.orderType}</span>
-                                    <span>Payment: {ord.preferredPayment}</span>
-                                    <span>Arrival Scheduled: {ord.scheduledTime}</span>
-                                  </div>
-
-                                  {/* Dispatch Control Suite */}
-                                  <div className="pt-2 border-t border-emerald-950/30">
-                                    <p className="text-[8px] font-mono text-emerald-500 uppercase font-bold tracking-widest mb-1.5">Dispatch Control Suite:</p>
-                                    <div className="grid grid-cols-5 gap-1">
-                                      <button
-                                        onClick={() => handleUpdateStatus(ord.orderId, 'cooking')}
-                                        className={`py-1 text-[8px] font-mono uppercase font-black rounded border transition cursor-pointer ${ord.status === 'cooking' ? 'bg-orange-500 text-white' : 'bg-[#050E0A] hover:bg-orange-950/20 text-orange-400 border-orange-900/45'}`}
-                                      >
-                                        🍳 Cook
-                                      </button>
-                                      <button
-                                        onClick={() => handleUpdateStatus(ord.orderId, 'ready')}
-                                        className={`py-1 text-[8px] font-mono uppercase font-black rounded border transition cursor-pointer ${ord.status === 'ready' ? 'bg-teal-500 text-white' : 'bg-[#050E0A] hover:bg-teal-950/20 text-teal-400 border-teal-900/45'}`}
-                                      >
-                                        📦 Ready
-                                      </button>
-                                      <button
-                                        onClick={() => handleUpdateStatus(ord.orderId, 'out_for_delivery')}
-                                        className={`py-1 text-[8px] font-mono uppercase font-black rounded border transition cursor-pointer ${ord.status === 'out_for_delivery' ? 'bg-blue-500 text-white' : 'bg-[#050E0A] hover:bg-blue-950/20 text-blue-400 border-blue-900/45'}`}
-                                      >
-                                        🚗 Route
-                                      </button>
-                                      <button
-                                        onClick={() => handleUpdateStatus(ord.orderId, 'completed')}
-                                        className={`py-1 text-[8px] font-mono uppercase font-black rounded border transition cursor-pointer ${ord.status === 'completed' ? 'bg-emerald-500 text-white animate-pulse' : 'bg-[#050E0A] hover:bg-emerald-950/20 text-emerald-400 border-emerald-900/45'}`}
-                                      >
-                                        ✅ Done
-                                      </button>
-                                      <button
-                                        onClick={() => handleUpdateStatus(ord.orderId, 'cancelled')}
-                                        className={`py-1 text-[8px] font-mono uppercase font-black rounded border transition cursor-pointer ${ord.status === 'cancelled' ? 'bg-red-500 text-white' : 'bg-[#050E0A] hover:bg-red-950/20 text-red-400 border-red-900/45'}`}
-                                      >
-                                        ❌ Cancel
-                                      </button>
-                                    </div>
-
-                                    {/* Real-time Tracking/Courier update info */}
-                                    <div className="mt-2.5 pt-2 border-t border-emerald-950/20 flex gap-1.5 items-center">
-                                      <input
-                                        type="text"
-                                        id={`tracking-${ord.orderId}`}
-                                        placeholder="Live ETA / Courier status (e.g. ETA 15m, Sean driving)..."
-                                        defaultValue={ord.trackingInfo || ''}
-                                        className="flex-1 bg-black/60 border border-emerald-900/40 rounded px-2 py-1 text-[9px] font-mono text-amber-300 placeholder:text-emerald-700/60 focus:outline-none focus:border-[#FF5C35]"
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const el = document.getElementById(`tracking-${ord.orderId}`) as HTMLInputElement;
-                                          if (el) {
-                                            handleUpdateStatus(ord.orderId, ord.status, el.value);
-                                          }
-                                        }}
-                                        className="bg-[#FF5C35] hover:bg-[#E64117] text-white px-2.5 py-1 rounded text-[8px] font-mono uppercase font-black tracking-wider transition cursor-pointer shrink-0"
-                                      >
-                                        Update Details
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-
+                      <button
+                        onClick={handleLogout}
+                        className="py-2 px-3.5 rounded-xl bg-red-950/30 border border-red-900/60 text-red-400 font-display font-black text-[10px] uppercase tracking-wider hover:bg-[#FF5C35] hover:text-white transition cursor-pointer flex items-center gap-1"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Exit Console</span>
+                      </button>
                     </div>
-                  ) : (
-                    /* 👑 LOGGED IN MEMBER PERSONAL VIEW WITH PROGRESS STATUS TRACKER */
-                    <div className="space-y-6">
-                      
-                      {/* Member Info Card */}
-                      <div className="bg-[#050E0A] p-4 rounded-2xl border border-emerald-950/60 flex justify-between items-center shadow-md">
-                        <div>
-                          <p className="text-[9px] uppercase font-mono text-emerald-500 font-extrabold tracking-widest">Logged In Member Profile</p>
-                          <h5 className="font-display font-black text-white text-base uppercase mt-1">{currentUser.displayName}</h5>
-                          <p className="text-xs text-emerald-400/80 font-mono mt-0.5">{currentUser.email}</p>
-                        </div>
-                        <button
-                          onClick={handleLogout}
-                          className="py-2.5 px-4 rounded-xl bg-red-950/30 border border-red-900/60 text-red-400 font-display font-black text-[10px] uppercase tracking-wider hover:bg-[#FF5C35] hover:text-white transition cursor-pointer flex items-center gap-1.5"
-                        >
-                          <LogOut className="w-3.5 h-3.5" />
-                          <span>Sign Out</span>
-                        </button>
+
+                    {/* Admin Quick Metrics Widgets */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-[#050E0A] border border-emerald-950 p-3 rounded-xl text-center">
+                        <p className="text-[8px] font-mono text-gray-500 uppercase font-black">Total Orders</p>
+                        <p className="text-xl font-display font-black text-amber-500 mt-1">{allAdminOrders.length}</p>
                       </div>
+                      <div className="bg-[#050E0A] border border-emerald-950 p-3 rounded-xl text-center">
+                        <p className="text-[8px] font-mono text-gray-500 uppercase font-black font-sans">Active Queue</p>
+                        <p className="text-xl font-display font-black text-[#FF5C35] mt-1">
+                          {allAdminOrders.filter(o => o.status !== 'completed' && o.status !== 'cancelled').length}
+                        </p>
+                      </div>
+                      <div className="bg-[#050E0A] border border-emerald-950 p-3 rounded-xl text-center">
+                        <p className="text-[8px] font-mono text-gray-500 uppercase font-black">All Revenue</p>
+                        <p className="text-xl font-display font-black text-emerald-400 mt-1">
+                          ${allAdminOrders.filter(o => o.status === 'completed').reduce((sum, o) => sum + o.grandTotal, 0)}.00
+                        </p>
+                      </div>
+                    </div>
 
-                      {/* 🎫 REAL-TIME LOYALTY MILESTONES & REWARDS SYSTEM */}
-                      {(() => {
-                        const completedOrdersSpend = pastOrders
-                          .filter(o => o.status === 'completed')
-                          .reduce((sum, o) => sum + o.grandTotal, 0);
-                        
-                        const registrationBonus = 0;
-                        const totalEarnedPoints = registrationBonus + Math.round(completedOrdersSpend * 10);
-                        const availablePoints = Math.max(0, totalEarnedPoints - redeemedPoints);
-
-                        let tierName = "Bronze Soul Companion 🥉";
-                        let tierColor = "text-amber-600";
-                        let progressPercent = Math.min(100, (availablePoints / 500) * 100);
-                        let nextMilestone = "Earn 500 pts to lock in Silver tier";
-                        
-                        if (availablePoints > 1500) {
-                          tierName = "Crib Soul Legend 👑";
-                          tierColor = "text-yellow-400";
-                          progressPercent = 100;
-                          nextMilestone = "Ultimate Soul status achieved! Maximum discount options unlocked.";
-                        } else if (availablePoints > 500) {
-                          tierName = "Silver Platter Elite 🥈";
-                          tierColor = "text-teal-300";
-                          progressPercent = Math.min(100, ((availablePoints - 500) / 1000) * 100);
-                          nextMilestone = "Earn 1500 pts to lock in Legendary status";
-                        }
-
-                        const rewardsCatalog = [
-                          { title: "Sweet Candied Yams Side Discount", cost: 300, val: 6, code: "CRIB-REWARD-YAMS-6" },
-                          { title: "$10 Off Any Gourmet Platter Coupon", cost: 500, val: 10, code: "CRIB-REWARD-COUPON-10" },
-                          { title: "Free Cajun Pasta Sautéed Chicken Alfredo", cost: 1200, val: 20, code: "CRIB-REWARD-ALFREDO-20" },
-                          { title: "Free Honey Garlic Lamb Chops Platter (4)", cost: 1800, val: 30, code: "CRIB-REWARD-LAMB-30" },
-                        ];
-
-                        return (
-                          <div className="bg-[#050E0A] p-5 rounded-2xl border border-emerald-900/40 relative space-y-4">
-                            
-                            {/* Card header */}
-                            <div className="flex justify-between items-center border-b border-emerald-950 pb-3">
-                              <div className="flex items-center space-x-2">
-                                <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold">
-                                  <Award className="w-4 h-4" />
-                                </div>
-                                <div>
-                                  <h6 className="font-display font-black text-xs text-white uppercase tracking-wider">Crib Points Loyalty Ledger</h6>
-                                  <p className="text-[8px] font-mono text-emerald-400 uppercase tracking-widest">Earn 10 pts per $1 spent on all platters</p>
-                                </div>
-                              </div>
-                              <span className={`text-[9px] font-mono uppercase bg-neutral-950 px-2 py-0.5 rounded border border-emerald-950/40 font-black ${tierColor}`}>
-                                {tierName}
-                              </span>
-                            </div>
-
-                            {/* Points indicator meter bar */}
-                            <div className="bg-neutral-950/80 p-4 rounded-xl border border-emerald-950/20 space-y-2.5">
-                              <div className="flex justify-between items-baseline select-none">
-                                <span className="text-[9px] font-mono text-gray-500 uppercase font-black">AVAILABLE BALANCE</span>
-                                <div className="flex items-baseline space-x-1 font-mono">
-                                  <span className="text-2xl font-display font-black text-amber-500">{availablePoints}</span>
-                                  <span className="text-[10px] text-gray-400">PTS</span>
-                                </div>
-                              </div>
-
-                              {/* Progress bar */}
-                              <div className="space-y-1">
-                                <div className="h-2 bg-emerald-950/30 rounded-full overflow-hidden border border-emerald-950/45">
-                                  <motion.div
-                                    className="h-full bg-gradient-to-r from-amber-500 to-[#FF5C35] rounded-full"
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${progressPercent}%` }}
-                                    transition={{ type: "spring", stiffness: 60, damping: 12 }}
-                                  />
-                                </div>
-                                <div className="flex justify-between text-[8px] font-mono text-neutral-500 uppercase tracking-wider">
-                                  <span>{availablePoints} PTS</span>
-                                  <span>{nextMilestone}</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Reward Notification Messages */}
-                            {rewardSuccessMessage && (
-                              <div className="bg-emerald-950/35 border border-emerald-800 text-emerald-400 text-[10px] font-mono p-3 rounded-lg leading-relaxed shadow-inner">
-                                {rewardSuccessMessage}
-                              </div>
-                            )}
-
-                            {/* Active Coupon Code indicator */}
-                            {rewardCode && (
-                              <div className="bg-amber-950/30 border border-amber-900 p-3 rounded-xl flex justify-between items-center text-[10px] font-mono text-amber-400">
-                                <div className="space-y-0.5">
-                                  <span className="font-extrabold uppercase tracking-wide">🎟️ Active Cart Coupon: {rewardCode}</span>
-                                  <p className="text-[8px] text-gray-500">Substracts -${activeRewardDiscount}.00 inside active checkout totals</p>
-                                </div>
-                                <button
-                                  onClick={handleCancelLoyaltyDiscount}
-                                  className="text-red-400 hover:text-red-300 uppercase font-bold text-[8px] bg-red-950/20 border border-red-900/30 px-2 py-1 rounded"
-                                >
-                                  Reset Code
-                                </button>
-                              </div>
-                            )}
-
-                            {/* The claimable rewards list row */}
-                            <div className="space-y-2">
-                              <p className="text-[8.5px] uppercase font-mono text-emerald-300 font-extrabold tracking-widest select-none">
-                                REDEEM REWARDS FOR CUSTOM FLAVOR COUPONS:
-                              </p>
-                              
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {rewardsCatalog.map((rew, idx) => {
-                                  const canClaim = availablePoints >= rew.cost;
-                                  const isCurrentlyRedeemed = rewardCode === rew.code;
-                                  
-                                  return (
-                                    <div
-                                      key={idx}
-                                      className={`p-3 rounded-xl border flex flex-col justify-between h-28 font-mono select-none transition ${
-                                        isCurrentlyRedeemed 
-                                          ? 'bg-amber-950/20 border-amber-800' 
-                                          : canClaim 
-                                            ? 'bg-neutral-950 border-emerald-950 hover:border-emerald-800/60' 
-                                            : 'bg-neutral-950/50 border-emerald-950/20 opacity-60'
-                                      }`}
-                                    >
-                                      <div className="space-y-1">
-                                        <div className="flex justify-between items-start">
-                                          <span className="text-[9px] text-[#FF5C35] font-extrabold uppercase leading-snug break-words pr-2 max-w-[100px]">{rew.title}</span>
-                                          <span className="text-[8px] uppercase tracking-wide font-black bg-neutral-950 border border-emerald-950 px-1.5 py-0.5 rounded text-amber-500 shrink-0">
-                                            {rew.cost} PTS
-                                          </span>
-                                        </div>
-                                        <p className="text-[8px] text-gray-500">Value check coupon saving: -${rew.val}.00</p>
-                                      </div>
-
-                                      <button
-                                        disabled={!canClaim || isCurrentlyRedeemed}
-                                        onClick={() => handleRedeemLoyalty(rew.cost, rew.title, rew.val, rew.code)}
-                                        className={`w-full py-1.5 rounded-lg text-center font-display font-black uppercase text-[8px] tracking-wider transition ${
-                                          isCurrentlyRedeemed
-                                            ? 'bg-amber-950/80 text-amber-400 border border-amber-900/20 cursor-default'
-                                            : canClaim
-                                              ? 'bg-[#FF5C35] hover:bg-[#E64117] text-white cursor-pointer shadow'
-                                              : 'bg-emerald-950/10 text-emerald-800 cursor-not-allowed border border-emerald-950/15'
-                                        }`}
-                                      >
-                                        {isCurrentlyRedeemed ? '🎟️ COUPON READY' : canClaim ? '🎁 CLAIM TICKET' : '🔒 NEED MORE POINTS'}
-                                      </button>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-
-                          </div>
-                        );
-                      })()}
-
-                      {/* REAL-TIME PROGRESS TRACKER FOR ACTIVE ORDERS */}
-                      {(() => {
-                        const activeOrders = pastOrders.filter(o => o.status !== 'completed' && o.status !== 'cancelled');
-                        if (activeOrders.length === 0) return null;
-
-                        const getStatusStepStatus = (status: string) => {
-                          switch (status) {
-                            case 'pending': 
-                            case 'confirmed':
-                              return 0;
-                            case 'preparing':
-                            case 'cooking':
-                              return 1;
-                            case 'ready':
-                              return 2;
-                            case 'out_for_delivery':
-                              return 3;
-                            case 'completed':
-                              return 4;
-                            default:
-                              return 0;
-                          }
-                        };
-
-                        return (
-                          <div className="space-y-4 pt-1">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-1.5 select-none">
-                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                                <span className="text-[10px] uppercase font-mono text-[#FF5C35] font-black tracking-widest">
-                                  🚨 SIZZLING LIVE ORDER TRACKER ({activeOrders.length})
-                                </span>
-                              </div>
-                              <button
-                                onClick={() => loadOrders(currentUser.uid)}
-                                className="text-[8.5px] font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-900 px-2 py-1 rounded hover:bg-emerald-900 transition flex items-center gap-1"
-                              >
-                                🔄 Refresh Status
-                              </button>
-                            </div>
-
-                            {activeOrders.map((ord) => {
-                              const stepIndex = getStatusStepStatus(ord.status);
-                              const steps = [
-                                { label: 'Received', icon: Clock },
-                                { label: 'Kitchen', icon: Flame },
-                                { label: 'Ready', icon: Store },
-                                { label: 'On Way', icon: Truck },
-                                { label: 'Arrived', icon: CheckCircle }
-                              ];
-
-                              return (
-                                <div key={ord.orderId} className="bg-[#050E0A] p-4 rounded-2xl border border-emerald-900/40 shadow-inner relative space-y-4">
-                                  <div className="flex justify-between items-center border-b border-emerald-950/40 pb-2 text-[10px] font-mono select-none">
-                                    <span className="font-extrabold text-white">REF: <span className="text-[#FF5C35]">{ord.orderId}</span></span>
-                                    <span className="text-emerald-500 uppercase font-semibold">{ord.orderType} • {ord.status}</span>
-                                  </div>
-
-                                  {/* Horizontal Step Tracker Bar */}
-                                  <div className="py-2 relative">
-                                    {/* Background Track Line */}
-                                    <div className="absolute top-[18px] left-[16px] right-[16px] h-1 bg-emerald-950/75 rounded -translate-y-1/2" />
-                                    {/* Active Track Overlay */}
-                                    <div 
-                                      className="absolute top-[18px] left-[16px] h-1 bg-[#FF5C35] rounded -translate-y-1/2 transition-all duration-500 ease-out" 
-                                      style={{ width: `calc(${stepIndex * 25}% - ${stepIndex === 4 ? '4px' : '0px'})` }}
-                                    />
-
-                                    {/* Nodes */}
-                                    <div className="relative flex justify-between">
-                                      {steps.map((st, idx) => {
-                                        const StepIcon = st.icon;
-                                        const isDone = idx < stepIndex;
-                                        const isCurrent = idx === stepIndex;
-
-                                        return (
-                                          <div key={idx} className="flex flex-col items-center">
-                                            <div 
-                                              className={`w-9 h-9 rounded-full border-2 flex items-center justify-center transition-all duration-300 relative z-10 ${
-                                                isDone 
-                                                  ? 'bg-[#FF5C35] border-[#FF5C35] text-white' 
-                                                  : isCurrent 
-                                                    ? 'bg-[#050E0A] border-[#FF5C35] text-[#FF5C35] shadow-[0_0_10px_rgba(255,92,53,0.4)] scale-110' 
-                                                    : 'bg-[#050E0A] border-emerald-950 text-emerald-600'
-                                              }`}
-                                            >
-                                              <StepIcon className="w-4.5 h-4.5" />
-                                            </div>
-                                            <span className={`text-[8px] font-mono mt-1.5 uppercase font-bold tracking-tight select-none ${
-                                              isCurrent 
-                                                ? 'text-[#FF5C35]' 
-                                                : isDone 
-                                                  ? 'text-emerald-400' 
-                                                  : 'text-neutral-500'
-                                            }`}>
-                                              {st.label}
-                                            </span>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-
-                                  {/* Miniature details for active progress */}
-                                  <div className="space-y-2">
-                                    <p className="text-[10px] font-mono text-emerald-100/60 leading-normal bg-[#040C08]/90 p-2.5 rounded-lg border border-emerald-950/20 text-center">
-                                      Your order is currently <span className="font-extrabold text-white uppercase">{ord.status.replace('_', ' ')}</span>. We're packing those heavy Philly soul food portions exactly as you built them!
-                                    </p>
-                                    
-                                    {ord.trackingInfo && (
-                                      <div className="bg-amber-950/20 border border-amber-900/30 p-2.5 rounded-lg text-left flex items-start gap-2 shadow-inner">
-                                        <span className="text-[11px] shrink-0 text-amber-400">🚚</span>
-                                        <div className="font-mono text-[9.5px] text-amber-200">
-                                          <span className="font-extrabold text-[#FF5C35] uppercase tracking-widest text-[8px] block mb-0.5">🚨 Owner Dispatch Live Tracking:</span>
-                                          <span className="leading-relaxed font-sans">{ord.trackingInfo}</span>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        );
-                      })()}
-
-                      {/* Member Order History Accordion */}
-                      <div className="space-y-3">
+                    {/* All Customer Orders Interactive List */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
                         <div className="flex items-center space-x-1.5">
                           <History className="w-4 h-4 text-[#FF5C35]" />
                           <span className="text-[10px] uppercase font-mono text-emerald-300 font-black tracking-widest">
-                            Your Complete Meal Order History ({pastOrders.length})
+                            ALL CUSTOMER ORDERS IN QUEUE ({allAdminOrders.length})
                           </span>
                         </div>
+                        <button
+                          onClick={loadAllAdminOrders}
+                          className="bg-emerald-950/40 border border-emerald-900 hover:bg-emerald-900 transition text-[8.5px] font-mono px-2.5 py-1 rounded text-emerald-400 uppercase font-black cursor-pointer"
+                        >
+                          🔄 Refresh Queue
+                        </button>
+                      </div>
 
-                        <div className="max-h-[190px] overflow-y-auto space-y-2.5 pr-1.5 scrollbar-thin scrollbar-thumb-emerald-950">
-                          {pastOrders.length === 0 ? (
-                            <div className="text-center py-8 text-neutral-500 font-mono text-xs border border-dashed border-emerald-950/50 rounded-2xl bg-[#040D09]">
-                              🚫 No historic orders logged. Add plates and order to record first!
-                            </div>
-                          ) : (
-                            pastOrders.map((ord) => (
-                              <div key={ord.orderId} className="bg-[#050E0A] border border-emerald-950 p-3.5 rounded-xl space-y-2">
-                                <div className="flex justify-between items-center text-[10px] font-mono border-b border-emerald-950/35 pb-1.5">
-                                  <span className="font-extrabold text-[#FF5C35]">{ord.orderId}</span>
-                                  <span className="text-neutral-500">{new Date(ord.createdAt).toLocaleDateString([], {month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'})}</span>
+                      <div className="max-h-[320px] overflow-y-auto space-y-3 pr-1.5 scrollbar-thin scrollbar-thumb-emerald-950">
+                        {allAdminOrders.length === 0 ? (
+                          <div className="text-center py-12 text-neutral-550 font-mono text-xs border border-dashed border-emerald-950/50 rounded-2xl bg-[#040D09]">
+                            📭 No active or historic customer orders. Orders placed will reveal here!
+                          </div>
+                        ) : (
+                          allAdminOrders.map((ord) => {
+                            const activeStatusColors: Record<string, string> = {
+                              pending: 'bg-yellow-950/40 text-yellow-500 border border-yellow-800/40',
+                              cooking: 'bg-orange-950/40 text-orange-400 border border-orange-850/40',
+                              preparing: 'bg-orange-950/40 text-orange-400 border border-orange-850/40',
+                              ready: 'bg-teal-950/40 text-teal-400 border border-teal-900/40',
+                              out_for_delivery: 'bg-blue-950/40 text-blue-400 border border-blue-900/40',
+                              completed: 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/40',
+                              cancelled: 'bg-red-950/40 text-red-400 border border-red-900/40'
+                            };
+
+                            return (
+                              <div key={ord.orderId} className="bg-[#050E0A] border border-emerald-950 p-4 rounded-xl space-y-3">
+                                {/* Order Title Header */}
+                                <div className="flex justify-between items-start text-[10px] font-mono border-b border-emerald-950/35 pb-2">
+                                  <div>
+                                    <span className="font-black text-amber-500 text-xs">{ord.customerName}</span>
+                                    <p className="text-[9px] text-gray-500 mt-0.5">{ord.orderId} • {ord.userId}</p>
+                                  </div>
+                                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${activeStatusColors[ord.status] || 'bg-gray-900 text-gray-500'}`}>
+                                    {ord.status}
+                                  </span>
                                 </div>
-                                <div className="text-[10px] font-mono text-neutral-300 space-y-0.5">
-                                  {ord.items.map((it, idx) => (
+
+                                {/* Meal Items and details */}
+                                <div className="text-[10px] font-mono text-neutral-300 space-y-0.5 bg-neutral-950/30 p-2 rounded-lg border border-emerald-950/15">
+                                  {ord.items && Array.isArray(ord.items) && ord.items.map((it, idx) => (
                                     <div key={idx} className="flex justify-between">
-                                      <span>• {it.name}</span>
+                                      <span>• {it.name} {it.selectedSides && `(${it.selectedSides.join(', ')})`}</span>
                                       <span>${it.computedPrice}.00</span>
                                     </div>
                                   ))}
-                                </div>
-                                <div className="flex justify-between items-center text-[10px] font-mono border-t border-emerald-950/35 pt-1.5 font-extrabold pb-1">
-                                  <span className="text-emerald-400/90 uppercase">{ord.orderType} ({ord.preferredPayment}) • {ord.status.replace('_', ' ')}</span>
-                                  <span className="text-white text-xs">Total: ${ord.grandTotal}.00</span>
+                                  <div className="flex justify-between pt-1.5 mt-1 border-t border-emerald-950/15 font-black text-white text-[11px]">
+                                    <span>GRAND TOTAL:</span>
+                                    <span>${ord.grandTotal}.00</span>
+                                  </div>
                                 </div>
 
-                                {ord.trackingInfo && (
-                                  <div className="bg-amber-950/20 border border-amber-900/20 p-2 rounded-lg text-left mt-1 text-[8.5px] font-mono text-amber-200">
-                                    <span className="font-extrabold text-[#FF5C35]">Dispatch Note:</span> {ord.trackingInfo}
-                                  </div>
-                                )}
+                                {/* Order meta info */}
+                                <div className="flex justify-between text-[8px] font-mono text-gray-400 uppercase select-none">
+                                  <span>Method: {ord.orderType}</span>
+                                  <span>Payment: {ord.preferredPayment}</span>
+                                  <span>Arrival Scheduled: {ord.scheduledTime}</span>
+                                </div>
 
-                                {ord.status === 'completed' && (
-                                  <div className="bg-[#030906] p-3 rounded-lg border border-emerald-900/20 mt-1 space-y-2">
-                                    {ord.rating ? (
-                                      <div className="space-y-1">
-                                        <div className="flex items-center justify-between">
-                                          <span className="text-[9px] uppercase font-mono text-neutral-400 font-extrabold">Your Stored Meal Rating:</span>
-                                          <div className="flex items-center gap-0.5 text-amber-500">
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                              <Star
-                                                key={star}
-                                                className={`w-3 h-3 ${star <= ord.rating! ? 'text-amber-400 fill-amber-400' : 'text-neutral-700'}`}
-                                              />
-                                            ))}
-                                          </div>
-                                        </div>
-                                        {ord.review && (
-                                          <p className="text-[10px] font-mono text-gray-300 italic">
-                                            "{ord.review}"
-                                          </p>
-                                        )}
-                                      </div>
-                                    ) : (
-                                      <div className="space-y-2">
-                                        <div className="flex items-center justify-between">
-                                          <span className="text-[9px] uppercase font-mono text-neutral-400 font-extrabold">GIVE A STAR RATING:</span>
-                                          <div className="flex items-center gap-1.5">
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                              <button
-                                                type="button"
-                                                key={star}
-                                                onClick={() => setFeedbackRating(prev => ({ ...prev, [ord.orderId]: star }))}
-                                                className="focus:outline-none transition hover:scale-115 active:scale-95 cursor-pointer"
-                                              >
-                                                <Star
-                                                  className={`w-3.5 h-3.5 ${
-                                                    star <= (feedbackRating[ord.orderId] || 5) 
-                                                      ? 'text-amber-400 fill-amber-400' 
-                                                      : 'text-neutral-700'
-                                                  }`}
-                                                />
-                                              </button>
-                                            ))}
-                                          </div>
-                                        </div>
-                                        
-                                        <div className="flex gap-2">
-                                          <input
-                                            type="text"
-                                            placeholder="Comment (e.g. Yams were phenomenal!)"
-                                            value={feedbackReview[ord.orderId] || ""}
-                                            onChange={(e) => setFeedbackReview(prev => ({ ...prev, [ord.orderId]: e.target.value }))}
-                                            className="flex-1 bg-[#030906] border border-emerald-900/60 text-[10px] px-2.5 py-1.5 rounded-lg font-mono text-white focus:outline-none focus:border-amber-500 placeholder:text-emerald-600/65"
-                                          />
-                                          <button
-                                            type="button"
-                                            onClick={() => handleSubmitFeedback(ord.orderId)}
-                                            className="bg-[#FF5C35] hover:bg-[#E64117] text-white px-3 py-1.5 rounded-lg text-[9px] font-mono uppercase tracking-wider font-extrabold transition cursor-pointer"
-                                          >
-                                            Submit
-                                          </button>
-                                        </div>
-                                      </div>
-                                    )}
+                                {/* Dispatch Control Suite */}
+                                <div className="pt-2 border-t border-emerald-950/30">
+                                  <p className="text-[8px] font-mono text-emerald-500 uppercase font-bold tracking-widest mb-1.5">Dispatch Control Suite:</p>
+                                  <div className="grid grid-cols-5 gap-1">
+                                    <button
+                                      onClick={() => handleUpdateStatus(ord.orderId, 'cooking')}
+                                      className={`py-1 text-[8px] font-mono uppercase font-black rounded border transition cursor-pointer ${ord.status === 'cooking' ? 'bg-orange-500 text-white' : 'bg-[#050E0A] hover:bg-orange-950/20 text-orange-400 border-orange-900/45'}`}
+                                    >
+                                      🍳 Cook
+                                    </button>
+                                    <button
+                                      onClick={() => handleUpdateStatus(ord.orderId, 'ready')}
+                                      className={`py-1 text-[8px] font-mono uppercase font-black rounded border transition cursor-pointer ${ord.status === 'ready' ? 'bg-teal-500 text-white' : 'bg-[#050E0A] hover:bg-teal-950/20 text-teal-400 border-teal-900/45'}`}
+                                    >
+                                      📦 Ready
+                                    </button>
+                                    <button
+                                      onClick={() => handleUpdateStatus(ord.orderId, 'out_for_delivery')}
+                                      className={`py-1 text-[8px] font-mono uppercase font-black rounded border transition cursor-pointer ${ord.status === 'out_for_delivery' ? 'bg-blue-500 text-white' : 'bg-[#050E0A] hover:bg-blue-950/20 text-blue-400 border-blue-900/45'}`}
+                                    >
+                                      🚗 Route
+                                    </button>
+                                    <button
+                                      onClick={() => handleUpdateStatus(ord.orderId, 'completed')}
+                                      className={`py-1 text-[8px] font-mono uppercase font-black rounded border transition cursor-pointer ${ord.status === 'completed' ? 'bg-emerald-500 text-white' : 'bg-[#050E0A] hover:bg-emerald-950/20 text-emerald-400 border-emerald-900/45'}`}
+                                    >
+                                      ✅ Done
+                                    </button>
+                                    <button
+                                      onClick={() => handleUpdateStatus(ord.orderId, 'cancelled')}
+                                      className={`py-1 text-[8px] font-mono uppercase font-black rounded border transition cursor-pointer ${ord.status === 'cancelled' ? 'bg-red-500 text-white' : 'bg-[#050E0A] hover:bg-red-950/20 text-red-000' +
+                                        ' text-red-400 border-red-900/45'}`}
+                                    >
+                                      ❌ Cancel
+                                    </button>
                                   </div>
-                                )}
+
+                                  {/* Real-time Tracking/Courier update info */}
+                                  <div className="mt-2.5 pt-2 border-t border-emerald-950/20 flex gap-1.5 items-center">
+                                    <input
+                                      type="text"
+                                      id={`tracking-${ord.orderId}`}
+                                      placeholder="Live ETA / Courier status (e.g. ETA 15m, Sean driving)..."
+                                      defaultValue={ord.trackingInfo || ''}
+                                      className="flex-1 bg-black/60 border border-emerald-900/40 rounded px-2 py-1 text-[9px] font-mono text-amber-300 placeholder:text-emerald-700/60 focus:outline-none focus:border-[#FF5630]"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const el = document.getElementById(`tracking-${ord.orderId}`) as HTMLInputElement;
+                                        if (el) {
+                                          handleUpdateStatus(ord.orderId, ord.status, el.value);
+                                        }
+                                      }}
+                                      className="bg-[#FF5C35] hover:bg-[#E64117] text-white px-2.5 py-1 rounded text-[8px] font-mono uppercase font-black tracking-wider transition cursor-pointer shrink-0"
+                                    >
+                                      Update Details
+                                    </button>
+                                  </div>
+                                </div>
                               </div>
-                            ))
-                          )}
-                        </div>
+                            );
+                          })
+                        )}
                       </div>
                     </div>
-                  )
+
+                  </div>
                 ) : (
-                  /* AUTHENTICATION PORTAL PANE */
+                  /* OWNER SECURE AUTHENTICATION PORTAL PANE */
                   <form onSubmit={handleAuthSubmit} className="space-y-4">
-                    <p className="text-[11px] font-mono text-[#D4AF37]/80 leading-relaxed text-center uppercase tracking-wider font-extrabold pb-2">
-                      ⭐ Join VIP Guest Services to instantly record past meal orders, bypass name setups & unlock supreme comfort tiers!
+                    <p className="text-[11px] font-mono text-[#D4AF37] leading-relaxed text-center uppercase tracking-wider font-extrabold pb-2">
+                       Restricted Website Owner Access Control Center General Gateway.
                     </p>
+
+                    {/* Developer/Preview Quick Bypass Button */}
+                    <div className="bg-amber-950/25 border border-amber-900/40 p-4 rounded-2xl space-y-2.5 text-center shadow-inner">
+                      <p className="text-[10px] font-mono text-gray-400 uppercase leading-snug">
+                        ⚡ Quick bypass button to instantly unlock and authenticate as <strong className="text-amber-500">dacribkitchen2@icloud.com</strong> for dashboard trials:
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleQuickOwnerBypass}
+                        className="w-full bg-amber-500 hover:bg-amber-600 text-neutral-950 font-display font-black uppercase tracking-wider text-[11px] py-2.5 px-4 rounded-xl flex items-center justify-center space-x-1.5 shadow transition active:scale-98 cursor-pointer"
+                      >
+                        <Crown className="w-4 h-4" />
+                        <span>QUICK-AUTH OWNER BYPASS 👑</span>
+                      </button>
+                    </div>
+
+                    <div className="flex items-center my-4 select-none">
+                      <div className="flex-1 border-t border-emerald-950/40"></div>
+                      <span className="px-3 text-[10px] text-emerald-400/50 font-mono">OR USE OPERATOR IDENTIFICATION</span>
+                      <div className="flex-1 border-t border-emerald-950/40"></div>
+                    </div>
 
                     <div>
                       <label className="text-[9px] uppercase font-mono text-emerald-400 tracking-widest font-black block mb-1">
-                        Enter Email Address <span className="text-red-500">*</span>
+                        System Owner Email <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="email"
                         required
-                        placeholder="you@email.com"
+                        placeholder="dacribkitchen2@icloud.com"
                         value={authEmail}
                         onChange={(e) => setAuthEmail(e.target.value)}
-                        className="w-full bg-[#030906] border border-emerald-800 focus:border-[#FF5630] rounded-xl px-4 py-3 text-sm text-amber-400 focus:outline-none placeholder:text-emerald-600/70 font-mono transition"
+                        className="w-full bg-[#030906] border border-emerald-850 focus:border-[#FF5630] rounded-xl px-4 py-3 text-sm text-amber-400 focus:outline-none placeholder:text-emerald-700/60 font-mono transition"
                       />
                     </div>
 
-                    {isSignUp && (
-                      <div>
-                        <label className="text-[9px] uppercase font-mono text-emerald-400 tracking-widest font-black block mb-1">
-                          Your Full Member Name <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="Your Name"
-                          value={authName}
-                          onChange={(e) => setAuthName(e.target.value)}
-                          className="w-full bg-[#030906] border border-emerald-800 focus:border-[#FF5630] rounded-xl px-4 py-3 text-sm text-amber-400 focus:outline-none placeholder:text-emerald-600/70 font-mono transition"
-                        />
-                      </div>
-                    )}
-
                     <div>
-                      <label className="text-[9px] uppercase font-mono text-emerald-400 tracking-widest font-black block mb-1">
-                        Crib Password (At least 6 chars) <span className="text-red-500">*</span>
-                      </label>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="text-[9px] uppercase font-mono text-emerald-400 tracking-widest font-black block">
+                          Console Password <span className="text-red-500">*</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={handleForgotPassword}
+                          className="text-[10.5px] font-mono text-amber-500 hover:text-amber-400 uppercase tracking-widest font-extrabold cursor-pointer transition hover:underline"
+                        >
+                          Forgot Password?
+                        </button>
+                      </div>
                       <input
                         type="password"
                         required
                         placeholder="••••••••"
                         value={authPassword}
                         onChange={(e) => setAuthPassword(e.target.value)}
-                        className="w-full bg-[#030906] border border-emerald-800 focus:border-[#FF5630] rounded-xl px-4 py-3 text-sm text-amber-400 focus:outline-none placeholder:text-emerald-600/70 font-mono transition"
+                        className="w-full bg-[#030906] border border-emerald-850 focus:border-[#FF5630] rounded-xl px-4 py-3 text-sm text-amber-400 focus:outline-none placeholder:text-emerald-700/60 font-mono transition"
                       />
+                      <p className="text-[9.5px] font-mono text-gray-500 mt-1 uppercase text-right tracking-wider select-none">
+                        Password resets dispatch exclusively to <strong className="text-emerald-400">dacribkitchen2@icloud.com</strong>
+                      </p>
                     </div>
 
                     {authError && (
-                      <p className="text-xs font-mono text-red-500 bg-red-950/20 px-3.5 py-2.5 rounded-xl border border-red-900/40 uppercase tracking-tight">
-                        ⚠️ Error: {authError}
+                      <p className="text-xs font-mono text-red-500 bg-red-950/20 px-3.5 py-2.5 rounded-xl border border-red-900/40 uppercase tracking-tight text-center">
+                        ⚠️ Access Blocked: {authError}
                       </p>
                     )}
 
                     <div className="pt-2">
                       <button
                         type="submit"
-                        className="w-full bg-[#FF5C35] hover:bg-[#E64117] text-white font-display font-black uppercase tracking-wider text-xs md:text-sm py-3.5 rounded-xl flex items-center justify-center space-x-2 shadow-lg cursor-pointer"
+                        className="w-full bg-[#FF5C35] hover:bg-[#E64117] text-white font-display font-black uppercase tracking-wider text-xs py-3.5 rounded-xl flex items-center justify-center space-x-2 shadow-lg cursor-pointer"
                       >
                         <Key className="w-4.5 h-4.5 text-white" />
-                        <span>{isSignUp ? 'REGISTER VIP MEMBERSHIP' : 'SIGN IN SECURELY'}</span>
-                      </button>
-                    </div>
-
-                    <div className="flex items-center my-3 select-none">
-                      <div className="flex-1 border-t border-emerald-950/40"></div>
-                      <span className="px-3 text-[10px] text-emerald-400/50 font-mono">OR</span>
-                      <div className="flex-1 border-t border-emerald-950/40"></div>
-                    </div>
-
-                    <div>
-                      <button
-                        type="button"
-                        onClick={handleGoogleSignIn}
-                        className="w-full bg-white hover:bg-neutral-100 text-neutral-900 font-display font-bold uppercase tracking-wider text-xs py-3 rounded-xl flex items-center justify-center space-x-2 py-3 shadow-md cursor-pointer transition active:scale-98"
-                      >
-                        <svg className="w-4 h-4 mr-1.5" viewBox="0 0 24 24">
-                          <path
-                            fill="#EA4335"
-                            d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.61 14.99 1 12 1 7.35 1 3.37 3.65 1.39 7.5L5.1 10.4C5.97 7.21 8.93 5.04 12 5.04z"
-                          />
-                          <path
-                            fill="#4285F4"
-                            d="M23.49 12.27c0-.81-.07-1.59-.2-2.34H12v4.44h6.44c-.28 1.48-1.12 2.73-2.38 3.58l3.69 2.87c2.16-1.99 3.4-4.92 3.4-8.55z"
-                          />
-                          <path
-                            fill="#FBBC05"
-                            d="M5.1 13.6c-.24-.71-.38-1.48-.38-2.27s.14-1.56.38-2.27L1.39 6.16c-.8 1.59-1.25 3.38-1.25 5.27s.45 3.68 1.25 5.27l3.71-2.9z"
-                          />
-                          <path
-                            fill="#34A853"
-                            d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.69-2.87c-1.02.68-2.33 1.09-3.9 1.09-3.07 0-5.67-2.17-6.6-5.04l-3.71 2.9C3.37 20.35 7.35 23 12 23z"
-                          />
-                        </svg>
-                        <span>SIGN IN WITH GOOGLE</span>
-                      </button>
-                    </div>
-
-                    <div className="flex justify-between items-center text-[10px] font-mono text-emerald-400/80 pt-3 border-t border-emerald-950/40">
-                      <span>{isSignUp ? 'Already have an account?' : "New to the Crib?"}</span>
-                      <button
-                        type="button"
-                        onClick={() => { setIsSignUp(!isSignUp); setAuthError(null); }}
-                        className="text-[#FF5C35] font-black uppercase tracking-wide underline cursor-pointer"
-                      >
-                        {isSignUp ? 'Log in here' : 'Create an account'}
+                        <span>AUTHORIZE OWNER SESSION</span>
                       </button>
                     </div>
                   </form>

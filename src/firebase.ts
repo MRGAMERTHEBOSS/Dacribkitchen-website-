@@ -117,17 +117,51 @@ const saveLocalUser = (user: UserProfile) => {
   localStorage.setItem('dacrib_local_users', JSON.stringify(filtered));
 };
 
-// Helper for local orders
+  // Helper for local orders
 export const getLocalOrders = (userId: string): PastOrder[] => {
   const data = localStorage.getItem('dacrib_local_orders');
-  const allOrders: PastOrder[] = data ? JSON.parse(data) : [];
-  return allOrders.filter(o => o.userId === userId);
+  let allOrders: PastOrder[] = [];
+  try {
+    const parsed = data ? JSON.parse(data) : [];
+    if (Array.isArray(parsed)) allOrders = parsed;
+  } catch (e) {
+    console.error("Failed to parse local orders in getLocalOrders", e);
+  }
+
+  // Deduplicate on read and save cleaned version back to prevent future issues
+  const uniqueMap = new Map<string, PastOrder>();
+  let hasDuplicates = false;
+  allOrders.forEach(o => {
+    if (o && o.orderId) {
+      if (uniqueMap.has(o.orderId)) {
+        hasDuplicates = true;
+      }
+      uniqueMap.set(o.orderId, o);
+    }
+  });
+
+  const uniqueOrders = Array.from(uniqueMap.values());
+  if (hasDuplicates) {
+    try {
+      localStorage.setItem('dacrib_local_orders', JSON.stringify(uniqueOrders));
+    } catch (e) {
+      console.error("Failed to repair local orders storage", e);
+    }
+  }
+
+  return uniqueOrders.filter(o => o && o.userId === userId);
 };
 
 export const saveLocalOrder = (order: PastOrder) => {
   const data = localStorage.getItem('dacrib_local_orders');
-  const allOrders: PastOrder[] = data ? JSON.parse(data) : [];
-  const filtered = allOrders.filter(o => o.orderId !== order.orderId);
+  let allOrders: PastOrder[] = [];
+  try {
+    const parsed = data ? JSON.parse(data) : [];
+    if (Array.isArray(parsed)) allOrders = parsed;
+  } catch (e) {
+    console.error("Failed to parse local orders in saveLocalOrder", e);
+  }
+  const filtered = allOrders.filter(o => o && o.orderId !== order.orderId);
   filtered.push(order);
   localStorage.setItem('dacrib_local_orders', JSON.stringify(filtered));
 };
@@ -200,20 +234,18 @@ export async function getUserProfile(uid: string, defaultEmail: string): Promise
 
 // Fetch user orders
 export async function fetchUserOrders(userId: string): Promise<PastOrder[]> {
+  const firebaseOrders: PastOrder[] = [];
   if (isFirebaseMode && db) {
     const path = 'orders';
     try {
       const qRef = query(
         collection(db, path),
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
+        where('userId', '==', userId)
       );
       const snap = await getDocs(qRef);
-      const orders: PastOrder[] = [];
       snap.forEach(d => {
-        orders.push({ orderId: d.id, ...d.data() } as PastOrder);
+        firebaseOrders.push({ orderId: d.id, ...d.data() } as PastOrder);
       });
-      return orders;
     } catch (err: any) {
       console.warn("Firestore fetchUserOrders failed, checking localStorage fallback:", err);
       const errStr = err instanceof Error ? err.message : String(err);
@@ -224,8 +256,33 @@ export async function fetchUserOrders(userId: string): Promise<PastOrder[]> {
     }
   }
 
-  // Local fallback
-  return getLocalOrders(userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  // Retrieve any local orders
+  const localOrders = getLocalOrders(userId);
+
+  // Combine both sources and deduplicate by orderId
+  const uniqueOrders = new Map<string, PastOrder>();
+  localOrders.forEach(o => {
+    if (o && o.orderId) uniqueOrders.set(o.orderId, o);
+  });
+  firebaseOrders.forEach(o => {
+    if (o && o.orderId) uniqueOrders.set(o.orderId, o);
+  });
+
+  const merged = Array.from(uniqueOrders.values());
+  return merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+// Persistent Guest ID helper
+export function getPersistentGuestId(): string {
+  if (typeof window !== 'undefined') {
+    let guestId = localStorage.getItem('dacrib_guest_uid');
+    if (!guestId) {
+      guestId = 'GUEST-' + Math.floor(100000 + Math.random() * 900000);
+      localStorage.setItem('dacrib_guest_uid', guestId);
+    }
+    return guestId;
+  }
+  return 'GUEST-SERVER';
 }
 
 // Save newly placed order
@@ -256,21 +313,19 @@ export async function placeUserOrder(orderData: Omit<PastOrder, 'orderId'>): Pro
 
 // Fetch all orders (for Owner dashboard)
 export async function fetchAllOrders(): Promise<PastOrder[]> {
+  const firebaseOrders: PastOrder[] = [];
   if (isFirebaseMode && db) {
     const path = 'orders';
     try {
       const qRef = query(
-        collection(db, path),
-        orderBy('createdAt', 'desc')
+        collection(db, path)
       );
       const snap = await getDocs(qRef);
-      const orders: PastOrder[] = [];
       snap.forEach(d => {
-        orders.push({ orderId: d.id, ...d.data() } as PastOrder);
+        firebaseOrders.push({ orderId: d.id, ...d.data() } as PastOrder);
       });
-      return orders;
     } catch (err: any) {
-      console.warn("Firestore fetchAllOrders failed, using localStorage fallback:", err);
+      console.warn("Firestore fetchAllOrders failed, using localStorage fallback only:", err);
       const errStr = err instanceof Error ? err.message : String(err);
       const isPermissionErr = errStr.toLowerCase().includes('permission') || err.code === 'permission-denied';
       if (isPermissionErr) {
@@ -279,10 +334,27 @@ export async function fetchAllOrders(): Promise<PastOrder[]> {
     }
   }
 
-  // Local fallback
-  const data = localStorage.getItem('dacrib_local_orders');
-  const allOrders: PastOrder[] = data ? JSON.parse(data) : [];
-  return allOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  // Retrieve any orders stored in local storage for browser testing/offline fallback
+  const localData = localStorage.getItem('dacrib_local_orders');
+  let localOrders: PastOrder[] = [];
+  try {
+    const parsed = localData ? JSON.parse(localData) : [];
+    if (Array.isArray(parsed)) localOrders = parsed;
+  } catch (e) {
+    console.error("Failed to parse local orders in fetchAllOrders", e);
+  }
+
+  // Combine both sources and deduplicate by orderId to ensure flawless supreme UX
+  const uniqueOrders = new Map<string, PastOrder>();
+  localOrders.forEach(o => {
+    if (o && o.orderId) uniqueOrders.set(o.orderId, o);
+  });
+  firebaseOrders.forEach(o => {
+    if (o && o.orderId) uniqueOrders.set(o.orderId, o);
+  });
+
+  const merged = Array.from(uniqueOrders.values());
+  return merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 // Update order status (for Owner dashboard)
@@ -302,8 +374,14 @@ export async function updateOrderStatus(
       await setDoc(doc(db, 'orders', orderId), updatePayload, { merge: true });
       
       const data = localStorage.getItem('dacrib_local_orders');
-      let allOrders: PastOrder[] = data ? JSON.parse(data) : [];
-      allOrders = allOrders.map(o => o.orderId === orderId ? { ...o, ...updatePayload } : o);
+      let allOrders: PastOrder[] = [];
+      try {
+        const parsed = data ? JSON.parse(data) : [];
+        if (Array.isArray(parsed)) allOrders = parsed;
+      } catch (e) {
+        console.error(e);
+      }
+      allOrders = allOrders.map(o => o && o.orderId === orderId ? { ...o, ...updatePayload } : o);
       localStorage.setItem('dacrib_local_orders', JSON.stringify(allOrders));
       
       return;
@@ -319,8 +397,14 @@ export async function updateOrderStatus(
 
   // Local fallback
   const data = localStorage.getItem('dacrib_local_orders');
-  let allOrders: PastOrder[] = data ? JSON.parse(data) : [];
-  allOrders = allOrders.map(o => o.orderId === orderId ? { ...o, ...updatePayload } : o);
+  let allOrders: PastOrder[] = [];
+  try {
+    const parsed = data ? JSON.parse(data) : [];
+    if (Array.isArray(parsed)) allOrders = parsed;
+  } catch (e) {
+    console.error(e);
+  }
+  allOrders = allOrders.map(o => o && o.orderId === orderId ? { ...o, ...updatePayload } : o);
   localStorage.setItem('dacrib_local_orders', JSON.stringify(allOrders));
 }
 
@@ -332,8 +416,14 @@ export async function submitOrderFeedback(orderId: string, rating: number, revie
       await setDoc(doc(db, 'orders', orderId), { rating, review }, { merge: true });
       
       const data = localStorage.getItem('dacrib_local_orders');
-      let allOrders: PastOrder[] = data ? JSON.parse(data) : [];
-      allOrders = allOrders.map(o => o.orderId === orderId ? { ...o, rating, review } : o);
+      let allOrders: PastOrder[] = [];
+      try {
+        const parsed = data ? JSON.parse(data) : [];
+        if (Array.isArray(parsed)) allOrders = parsed;
+      } catch (e) {
+        console.error(e);
+      }
+      allOrders = allOrders.map(o => o && o.orderId === orderId ? { ...o, rating, review } : o);
       localStorage.setItem('dacrib_local_orders', JSON.stringify(allOrders));
       
       return;
@@ -349,8 +439,14 @@ export async function submitOrderFeedback(orderId: string, rating: number, revie
 
   // Local fallback
   const data = localStorage.getItem('dacrib_local_orders');
-  let allOrders: PastOrder[] = data ? JSON.parse(data) : [];
-  allOrders = allOrders.map(o => o.orderId === orderId ? { ...o, rating, review } : o);
+  let allOrders: PastOrder[] = [];
+  try {
+    const parsed = data ? JSON.parse(data) : [];
+    if (Array.isArray(parsed)) allOrders = parsed;
+  } catch (e) {
+    console.error(e);
+  }
+  allOrders = allOrders.map(o => o && o.orderId === orderId ? { ...o, rating, review } : o);
   localStorage.setItem('dacrib_local_orders', JSON.stringify(allOrders));
 }
 
