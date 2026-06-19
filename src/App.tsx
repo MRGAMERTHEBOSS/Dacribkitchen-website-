@@ -79,6 +79,7 @@ const imageMap: Record<string, string> = {
   lamb_chops: lambChopsImg,
   salmon: salmonImg,
   turkey_wings: turkeyWingsImg,
+  wing_platter: wingsImg,
   steak: sauteedSteakImg,
   chicken_platter: chickenImg,
   shrimp_platter: shrimpImg,
@@ -230,6 +231,9 @@ export default function App() {
       if (it.extraOptionChecked) {
         computedPrice += 5; // Double portion is $5 extra
       }
+      if (it.selectedSides && it.selectedSides.length > 0) {
+        computedPrice += it.selectedSides.length * 6; // Each side is $6
+      }
       return {
         ...it,
         computedPrice
@@ -258,7 +262,7 @@ export default function App() {
       triggerToast(`Added ${item.name} to your tray! 🥗`);
       confetti({ particleCount: 30, spread: 40, colors: ['#D32F2F', '#E5A93C'] });
     } else {
-      // Entrees trigger custom sides selection modal
+      // Platters trigger custom sides selection modal
       setCustomizingItem(item);
       setSelectedSides([]);
       setExtraOptionChecked(false);
@@ -270,12 +274,12 @@ export default function App() {
     
     // Validate side options (must select up to 2, we strongly recommend exactly 2)
     if (selectedSides.length > 2) {
-      triggerToast("You can choose a maximum of 2 complimentary sides!");
+      triggerToast("You can choose a maximum of 2 sides!");
       return;
     }
 
     const newCartItem: CartItem = {
-      cartId: `entree-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      cartId: `platter-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       name: customizingItem.name,
       basePrice: customizingItem.price,
       category: 'entree',
@@ -294,7 +298,7 @@ export default function App() {
       setSelectedSides(prev => prev.filter(s => s !== sideName));
     } else {
       if (selectedSides.length >= 2) {
-        triggerToast("Maximum of 2 complimentary sides already chosen!");
+        triggerToast("Maximum of 2 sides already chosen!");
         return;
       }
       setSelectedSides(prev => [...prev, sideName]);
@@ -331,9 +335,12 @@ export default function App() {
     smsBody += `Items:\n`;
 
     calculatedItems.forEach((it, idx) => {
-      const sides = it.selectedSides && it.selectedSides.length > 0 ? ` [${it.selectedSides.join(', ')}]` : '';
+      const itemName = it.name || 'Platter Item';
       const extra = it.extraOptionChecked ? ' +Double' : '';
-      smsBody += `${idx + 1}. ${it.name}${sides}${extra} - $${it.computedPrice}\n`;
+      smsBody += `${idx + 1}. ${itemName}${extra} - $${it.computedPrice}\n`;
+      if (it.selectedSides && it.selectedSides.length > 0) {
+        smsBody += `   Sides: ${it.selectedSides.join(', ')}\n`;
+      }
     });
 
     smsBody += `\nSubtotal: $${subtotal}.00\n`;
@@ -477,7 +484,7 @@ export default function App() {
         // Draw side details carefully
         let details: string[] = [];
         if (item.category === 'entree' && item.selectedSides) {
-          details.push(`Sides choice: ${item.selectedSides.join(', ')}`);
+          details.push(`Sides: ${item.selectedSides.join(', ')}`);
           if (item.extraOptionChecked) details.push("Extra: Double Meat Portion (+$5)");
         } else if (item.category === 'salad') {
           details.push("Chilled specialty salad bowl prep");
@@ -699,7 +706,7 @@ export default function App() {
         
         let details: string[] = [];
         if (item.selectedSides && item.selectedSides.length > 0) {
-          details.push(`Sides choice: ${item.selectedSides.join(', ')}`);
+          details.push(`Sides: ${item.selectedSides.join(', ')}`);
         }
         if (item.pastaBase) {
           details.push(`Pasta choice: ${item.pastaBase}`);
@@ -1113,7 +1120,7 @@ export default function App() {
               <img 
                 src={imageMap.salmon} 
                 alt="DaCrib Specialty Blackened Salmon Platter" 
-                className="w-full h-full object-cover object-[center_68%] scale-[1.12]"
+                className="w-full h-full object-cover object-bottom scale-[1.12]"
                 referrerPolicy="no-referrer"
               />
               {/* Overlaid Banner Badge with no clipping bounds */}
@@ -1167,7 +1174,7 @@ export default function App() {
                   : 'text-[#829e90] hover:text-white'
                 }`}
               >
-                {tab}
+                {tab === 'entrees' ? 'PLATTERS' : tab.toUpperCase()}
               </button>
             ))}
           </div>
@@ -1184,7 +1191,8 @@ export default function App() {
                       <img 
                         src={imageMap[item.id] || imageMap.salmon} 
                         alt={item.name} 
-                        className="w-full h-full object-cover select-none transition duration-530 hover:scale-105"
+                        className="w-full h-full object-cover select-none transition duration-500 hover:scale-110"
+                        style={{ objectPosition: item.id === 'wing_platter' ? 'center 15%' : 'center bottom' }}
                         referrerPolicy="no-referrer"
                       />
                       {item.popular && (
@@ -1295,17 +1303,18 @@ export default function App() {
           {activeTab === 'sides' && (
             <div className="bg-[#091b11] border border-[#143323] rounded-2xl p-6 shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-[#143323]">
-                <span className="text-xs uppercase font-mono font-black text-[#829e90]">Available Complimentary Sides</span>
-                <span className="text-[10px] text-stone-400 font-sans italic">Custom selection handled inside entree menus</span>
+                <span className="text-xs uppercase font-mono font-black text-[#829e90]">Available Sides</span>
+                <span className="text-[10px] text-stone-400 font-sans italic">Side selection is made inside platter menus</span>
               </div>
               <p className="text-xs text-[#A2BAAD]">
-                Our standard entree platters include your selection of **up to 2** of our signature slow-simmered sides. Sides are not sold separately so they stay hot and packed with our custom-blended kitchen seasonings.
+                Our standard platter orders allow up to **2** signature sides. Each side is sold separately for <span className="font-bold text-white">$6</span>.
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
                 {sides.map((sideName) => (
-                  <div key={sideName} className="flex items-center space-x-2.5 bg-[#0a2014] border border-[#143323] p-3 rounded-xl select-none text-xs font-mono font-[#829e90] text-stone-200">
+                  <div key={sideName} className="flex items-center justify-between space-x-2.5 bg-[#0a2014] border border-[#143323] p-3 rounded-xl select-none text-xs font-mono font-[#829e90] text-stone-200">
                     <div className="w-2 h-2 rounded-full bg-[#E5A93C]" />
                     <span>{sideName}</span>
+                    <span className="text-[10px] text-[#A2BAAD]">$6</span>
                   </div>
                 ))}
               </div>
@@ -1394,11 +1403,11 @@ export default function App() {
                         <div className="flex justify-between items-start gap-4">
                           <div>
                             <h5 className="font-serif font-black text-sm text-white uppercase tracking-tight">
-                              {it.name}
+                              {it.name || 'Platter Item'}
                             </h5>
                             
                             {/* Extra portion toggle description if checked */}
-                            {it.category === 'entree' && it.selectedSides && (
+                            {it.selectedSides && it.selectedSides.length > 0 && (
                               <p className="text-[10.5px] text-[#A2BAAD] font-mono mt-0.5 font-bold">
                                 Sides: {it.selectedSides.join(', ')}
                               </p>
@@ -1971,7 +1980,7 @@ export default function App() {
                               <div>
                                 <span className="text-stone-900 font-bold">• {it.name}</span>
                                 {it.selectedSides && it.selectedSides.length > 0 && (
-                                  <span className="text-[10px] text-stone-500 italic block pl-3">Complimentary sides: {it.selectedSides.join(', ')}</span>
+                                  <span className="text-[10px] text-stone-500 italic block pl-3">Sides: {it.selectedSides.join(', ')}</span>
                                 )}
                               </div>
                               <span>${it.computedPrice}.00</span>
@@ -2101,15 +2110,15 @@ export default function App() {
                 
                 {/* Visual description */}
                 <p className="text-xs text-stone-500 font-sans leading-relaxed">
-                  Every soul food entree platter is fully loaded with your selection of up to **2 complimentary sides** fresh from our hot skillets.
+                  Every soul food platter allows your selection of up to **2 sides**. Each selected side is charged separately at <span className="font-bold text-stone-700">$6</span>.
                 </p>
 
                 {/* SIDES PREFAB FIELD */}
                 <div className="space-y-3">
                   <div className="flex justify-between items-center text-xs font-mono font-black border-b border-stone-200 pb-2">
-                    <span className="text-stone-500 uppercase">CHOOSE COMPLIMENTARY SIDES:</span>
+                    <span className="text-stone-500 uppercase">CHOOSE UP TO 2 SIDES ($6 each):</span>
                     <span className="text-[#D32F2F] bg-[#D32F2F]/10 px-2 py-0.5 rounded text-[10px]">
-                      {selectedSides.length}/2 SELECT
+                      {selectedSides.length}/2 SELECTED
                     </span>
                   </div>
 
@@ -2138,6 +2147,10 @@ export default function App() {
                     })}
                   </div>
                 </div>
+
+                <p className="text-[10px] font-mono text-stone-500 italic mt-2">
+                  Side charges appear in the total and are automatically added when you confirm this platter.
+                </p>
 
                 {/* UPSELL CHIP: Double portion option */}
                 <div className="bg-stone-50 border border-stone-200 p-4 rounded-2xl flex items-center justify-between">
@@ -2197,7 +2210,7 @@ export default function App() {
 
           <div className="space-y-2 font-mono text-xs text-stone-400">
             <p className="text-stone-300 font-black uppercase text-[10px]">CRIB SCHEDULES</p>
-            <p>Tuesdays - Saturdays Only: 5:00 PM — 8:00 PM</p>
+            <p>Fridays &amp; Saturdays Only: 5:00 PM — 8:00 PM</p>
             <p>Direct dispatcher line: 445.326.2790</p>
           </div>
 

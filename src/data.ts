@@ -20,8 +20,9 @@ export interface ComboItem {
 export const entrees: MenuItem[] = [
   { id: 'lamb_chops', name: 'Honey garlic Lamb Chops', price: 30, desc: 'Juicy tender lamb chops grilled to perfection over open flame and glazed in exquisite honey-garlic sauce.', calories: '950 kcal', popular: true, tag: 'Chef Signature' },
   { id: 'turkey_wings', name: 'Turkey Wings', price: 28, desc: 'Gigantic, slow-cooked turkey wings falling off the bone, seasoned with premium soul spices.', calories: '1100 kcal', popular: true, tag: 'Local Legend' },
+  { id: 'wing_platter', name: 'Wing Platter', price: 25, desc: 'Crispy seasoned wings served with your choice of two classic sides.', calories: '920 kcal', popular: false, tag: 'New' },
   { id: 'salmon', name: 'Blackened Salmon', price: 25, desc: 'Fresh premium Atlantic salmon with a heavy seared cajun crust, locking in buttery moisture.', calories: '720 kcal', popular: true, tag: 'Bestseller' },
-  { id: 'steak', name: 'Sautéed Steak', price: 25, desc: 'Premium cut steak tender strips, sautéed juicy with skillet onions & fresh green bell pepper.', calories: '810 kcal', popular: false, tag: '' },
+  { id: 'steak', name: 'Sautéed Steak', price: 20, desc: 'Premium cut steak tender strips, sautéed juicy with skillet onions & fresh green bell pepper.', calories: '810 kcal', popular: false, tag: '' },
   { id: 'chicken_platter', name: 'Sautéed Chicken', price: 20, desc: 'Super tender chicken breast bits, perfectly seared & sautéed with house blended spices.', calories: '650 kcal', popular: false, tag: '' },
   { id: 'shrimp_platter', name: 'Sautéed Shrimp', price: 22, desc: 'Succulent butter-sautéed jumbo shrimp tossed in flavorful rich garlic butter seasonings.', calories: '580 kcal', popular: false, tag: '' }
 ];
