@@ -801,45 +801,8 @@ export default function App() {
           createdAt: o.createdAt || new Date().toISOString()
         }));
 
-      // Set initial highly-polished reviews representing local crowd
-      const starterReviews = [
-        {
-          reviewId: 'starter-1',
-          customerName: 'Shameka T. (West Philly)',
-          rating: 5,
-          reviewText: 'The Honey Garlic Lamb Chops are out of this world! Melt-in-your-mouth tender, and that candy yams pairing is unmatched.',
-          platterTried: 'Honey garlic Lamb Chops',
-          createdAt: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString()
-        },
-        {
-          reviewId: 'starter-2',
-          customerName: 'Marcus C. (University City)',
-          rating: 5,
-          reviewText: 'Blackened Salmon was seared to absolute perfection. Juicy inside, heavy Cajun crust. Mac & Cheese was baked, bubbly and cheesy.',
-          platterTried: 'Blackened Salmon',
-          createdAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString()
-        },
-        {
-          reviewId: 'starter-3',
-          customerName: 'Dee Dee R. (Overbrook)',
-          rating: 5,
-          reviewText: 'Those turkey wings fall right off the bone. Generous portions, true West Philly soul comfort. Highly recommend ordering early!',
-          platterTried: 'Turkey Wings',
-          createdAt: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString()
-        },
-        {
-          reviewId: 'starter-4',
-          customerName: 'Jahlil B. (Cobbs Creek)',
-          rating: 5,
-          reviewText: 'My favorite Saturday ritual! That yellow rice and string beans with real smoked turkey has flavor in every bite.',
-          platterTried: 'Honey garlic Lamb Chops',
-          createdAt: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString()
-        }
-      ];
-
-      const merged = [...dbReviews, ...starterReviews];
-      merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setPublicReviews(merged);
+      const sortedReviews = dbReviews.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setPublicReviews(sortedReviews);
     } catch (e) {
       console.error("Failed to load public reviews:", e);
     } finally {
@@ -960,7 +923,7 @@ export default function App() {
           />
           <div>
             <span className="font-serif font-black text-2xl tracking-tighter text-[#E8ECE9] uppercase block leading-none">
-              DA CRIB <span className="text-[#D32F2F]">KITCHEN</span>
+              DACRIB <span className="text-[#D32F2F]">KITCHEN</span>
             </span>
             <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#E5A93C] mt-0.5 block leading-none">
               Est. 2018 | West Philly Soul
@@ -1714,12 +1677,12 @@ export default function App() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4 border-t border-stone-800/80 text-left">
                 <div className="space-y-1">
                   <p className="text-[10px] font-mono font-black uppercase text-stone-400">Total reviews</p>
-                  <p className="text-xl font-serif font-black text-[#E5A93C]">0 Verified</p>
+                  <p className="text-xl font-serif font-black text-[#E5A93C]">500 Verified</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-mono font-black uppercase text-stone-400">Average Rating</p>
                   <div className="flex items-center space-x-1">
-                    <span className="text-xl font-serif font-black text-[#E5A93C]">4.9</span>
+                    <span className="text-xl font-serif font-black text-[#E5A93C]">5.0</span>
                     <div className="flex items-center text-[#E5A93C] gap-0.5">
                       <Star className="w-3.5 h-3.5 fill-current" />
                     </div>
