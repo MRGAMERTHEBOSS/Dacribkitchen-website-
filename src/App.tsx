@@ -434,6 +434,9 @@ export default function App() {
       if (customerName) {
         doc.text(`CUSTOMER: ${customerName.toUpperCase()}`, 15, 69);
       }
+      if (orderType === 'delivery' && deliveryAddress.trim()) {
+        doc.text(`DELIVERY ADDRESS: ${deliveryAddress}`, 15, 75);
+      }
       
       // Table Header row (classic dark gray solid structure)
       doc.setFillColor(33, 33, 33);
@@ -2186,7 +2189,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
           
           <div className="space-y-3">
-            <h4 className="font-serif font-black text-white text-lg uppercase">DACRIB KITCHEN CO.</h4>
+            <h4 className="font-serif font-black text-white text-lg uppercase">DACRIB KITCHEN</h4>
             <p className="text-xs text-stone-400 max-w-xs leading-relaxed">
               We started in 2018 at the heart of Philadelphia to bring hot skillet comfort dinners and gourmet blackened combinations straight to the neighborhood. 
             </p>
@@ -2194,7 +2197,7 @@ export default function App() {
 
           <div className="space-y-2 font-mono text-xs text-stone-400">
             <p className="text-stone-300 font-black uppercase text-[10px]">CRIB SCHEDULES</p>
-            <p>Saturdays Only: 11:00 AM — 9:00 PM</p>
+            <p>Tuesdays - Saturdays Only: 5:00 PM — 8:00 PM</p>
             <p>Direct dispatcher line: 445.326.2790</p>
           </div>
 
