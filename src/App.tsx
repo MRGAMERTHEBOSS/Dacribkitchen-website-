@@ -321,41 +321,37 @@ export default function App() {
       return;
     }
 
-    let smsBody = `🔥 DACRIB KITCHEN ORDER 🔥\n`;
+    let smsBody = `DACRIB KITCHEN ORDER\n`;
     smsBody += `Client: ${customerName}\n`;
-    smsBody += `Type: ${orderType.toUpperCase()} (${orderTimeType === 'asap' ? 'ASAP' : `Scheduled for ${scheduledTime}`})\n`;
+    smsBody += `Type: ${orderType.toUpperCase()} (${orderTimeType === 'asap' ? 'ASAP' : `Scheduled ${scheduledTime}`})\n`;
     if (orderType === 'delivery') {
-      smsBody += `Delivery Address: ${deliveryAddress}\n`;
+      smsBody += `Address: ${deliveryAddress}\n`;
     }
-    smsBody += `Payment: ${preferredPayment}\n\n`;
-    smsBody += `PLATES SECURED:\n`;
-    
+    smsBody += `Payment: ${preferredPayment}\n`;
+    smsBody += `Items:\n`;
+
     calculatedItems.forEach((it, idx) => {
-      smsBody += `${idx + 1}. ${it.name} ($${it.computedPrice})\n`;
-      if (it.selectedSides && it.selectedSides.length > 0) {
-        smsBody += `   • Sides: ${it.selectedSides.join(', ')}\n`;
-      }
-      if (it.extraOptionChecked) {
-        smsBody += `   • Extra Option: Double Portion Included (+$5)\n`;
-      }
+      const sides = it.selectedSides && it.selectedSides.length > 0 ? ` [${it.selectedSides.join(', ')}]` : '';
+      const extra = it.extraOptionChecked ? ' +Double' : '';
+      smsBody += `${idx + 1}. ${it.name}${sides}${extra} - $${it.computedPrice}\n`;
     });
 
     smsBody += `\nSubtotal: $${subtotal}.00\n`;
     if (deliveryFee > 0) smsBody += `Delivery: $${deliveryFee}.00\n`;
-    smsBody += `Total Bill: $${grandTotal}.00\n\n`;
+    smsBody += `Total: $${grandTotal}.00\n`;
     if (specialNotes.trim()) {
-      smsBody += `Notes: "${specialNotes}"\n\n`;
+      smsBody += `Note: ${specialNotes}\n`;
     }
-    smsBody += `*CRIB-DISPATCH-ORDER-VERIFICATION*`;
+    smsBody += `Receipt: download PDF receipt and show this order when texting.\n`;
+    smsBody += `\nCRIB-DISPATCH-VERIFIED`;
 
     const encoded = encodeURIComponent(smsBody);
-    // Use cross-platform SMS protocol instead of WhatsApp as requested by user
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const smsUrl = isIOS 
-      ? `sms:+14453262790&body=${encoded}` 
+    const smsUrl = isIOS
+      ? `sms:+14453262790&body=${encoded}`
       : `sms:+14453262790?body=${encoded}`;
-    window.open(smsUrl, '_blank');
-    
+    window.location.href = smsUrl;
+
     // Save order in history (real database persistent storage)
     setOrderPlacing(true);
     const orderData = {
@@ -1622,8 +1618,21 @@ export default function App() {
                     />
                   </div>
 
-                  {/* SUBMIT BUTTON SECTION FOR CUSTOM PLATES */}
-                  <div className="pt-2">
+                  <div className="space-y-3 pt-4 border-t border-[#143323]">
+                    <div className="bg-[#08170E] border border-[#143323] rounded-2xl p-4 text-sm text-[#A2BAAD] font-mono leading-relaxed">
+                      <p className="font-black uppercase text-[9px] tracking-widest text-[#E5A93C]">Receipt tip</p>
+                      <p className="mt-2">Download the PDF receipt before sending the SMS order so you can show the exact order details.</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={downloadPdfReceipt}
+                      className="w-full py-3 bg-[#1E5F33] hover:bg-[#1A5530] text-[#E5A93C] font-mono text-[10px] uppercase font-black rounded-xl transition flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>Download PDF Receipt</span>
+                    </button>
+
                     <button
                       type="button"
                       onClick={handleTriggerSmsOrder}
