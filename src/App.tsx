@@ -245,7 +245,7 @@ export default function App() {
     return calculatedItems.reduce((acc, it) => acc + it.computedPrice, 0);
   }, [calculatedItems]);
 
-  const deliveryFee = orderType === 'delivery' ? 5 : 0;
+  const deliveryFee = orderType === 'delivery' ? 6 : 0;
   const grandTotal = subtotal + deliveryFee;
 
   // Add standard item or request custom configuration modal
@@ -533,7 +533,7 @@ export default function App() {
 
       doc.setFont("Helvetica", "bold");
       doc.setTextColor(190, 30, 30);
-      doc.text("THANK YOU FOR YOUR PATRONAGE! CRIB KITCHEN CO.", 105, currentY + 6, { align: "center" });
+      doc.text("THANK YOU FOR YOUR PATRONAGE! DACRIB KITCHEN.", 105, currentY + 6, { align: "center" });
 
       doc.save(`Da_Crib_Receipt_${randomTicketNum}.pdf`);
       triggerToast("Compiled PDF Invoice dispatched successfully! 🧾");
@@ -752,11 +752,11 @@ export default function App() {
       doc.setFont("Helvetica", "normal");
       doc.setFontSize(9);
       doc.setTextColor(130, 130, 130);
-      doc.text("Secure order code matching dispatcher logs and records status: " + order.status.toUpperCase(), 105, currentY, { align: "center" });
+      doc.text("Secure order code formatted & dispatched instantly to dispatcher logs.", 105, currentY, { align: "center" });
 
       doc.setFont("Helvetica", "bold");
       doc.setTextColor(190, 30, 30);
-      doc.text("THANK YOU FOR YOUR PATRONAGE! CRIB KITCHEN CO.", 105, currentY + 6, { align: "center" });
+      doc.text("THANK YOU FOR YOUR PATRONAGE! DACRIB KITCHEN.", 105, currentY + 6, { align: "center" });
 
       doc.save(`Da_Crib_Receipt_${order.orderId}.pdf`);
       triggerToast("Past ticket PDF downloaded! 🧾");
@@ -1192,7 +1192,7 @@ export default function App() {
                         src={imageMap[item.id] || imageMap.salmon} 
                         alt={item.name} 
                         className="w-full h-full object-cover select-none transition duration-500 hover:scale-110"
-                        style={{ objectPosition: item.id === 'wing_platter' ? 'center 15%' : 'center bottom' }}
+                        style={{ objectPosition: item.id === 'wing_platter' ? 'center 90%' : 'center bottom' }}
                         referrerPolicy="no-referrer"
                       />
                       {item.popular && (
