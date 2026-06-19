@@ -1622,7 +1622,7 @@ export default function App() {
                     <span className="text-[10px] uppercase font-mono text-[#829e90] tracking-wider font-extrabold block mb-2">Preferred CRIB Payment Route</span>
                     <div className="grid grid-cols-2 gap-2 text-xs font-mono">
                       {[
-                        { name: 'Apple Pay' as const, label: ' Pay' },
+                        { name: 'Apple Pay' as const, label: 'Apple Pay' },
                         { name: 'CashApp' as const, label: '$ CashApp' },
                         { name: 'Zelle' as const, label: 'Zelle Pay' },
                         { name: 'Cash' as const, label: 'Cash On Deliver' }
@@ -1704,7 +1704,7 @@ export default function App() {
                 ★ ★ ★ ★ ★ Neighbors Certified
               </span>
               <h2 className="font-serif font-black text-3xl md:text-5xl uppercase tracking-tight leading-none">
-                WEST PHILLY REVIEWS WALL
+                DACRIB KITCHEN REVIEWS WALL
               </h2>
               <p className="text-xs md:text-sm text-stone-400 font-mono leading-relaxed">
                 Est. 2018 — Every recipe cooked block-by-block with skillet flame, heavy garlic butter, and absolute love. Read real neighbor experiences or file your own guest review below!
@@ -1714,7 +1714,7 @@ export default function App() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4 border-t border-stone-800/80 text-left">
                 <div className="space-y-1">
                   <p className="text-[10px] font-mono font-black uppercase text-stone-400">Total reviews</p>
-                  <p className="text-xl font-serif font-black text-[#E5A93C]">1,284 Verified</p>
+                  <p className="text-xl font-serif font-black text-[#E5A93C]">0 Verified</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-mono font-black uppercase text-stone-400">Average Rating</p>
@@ -2214,7 +2214,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
           
           <div className="space-y-3">
-            <h4 className="font-serif font-black text-white text-lg uppercase">DA CRIB KITCHEN CO.</h4>
+            <h4 className="font-serif font-black text-white text-lg uppercase">DACRIB KITCHEN CO.</h4>
             <p className="text-xs text-stone-400 max-w-xs leading-relaxed">
               We started in 2018 at the heart of Philadelphia to bring hot skillet comfort dinners and gourmet blackened combinations straight to the neighborhood. 
             </p>
@@ -2239,7 +2239,7 @@ export default function App() {
         </div>
 
         <div className="max-w-7xl mx-auto border-t border-stone-800 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-500 font-mono gap-4">
-          <span>&copy; {new Date().getFullYear()} DA CRIB KITCHEN. All Rights Reserved.</span>
+          <span>&copy; {new Date().getFullYear()} DACRIB KITCHEN. All Rights Reserved.</span>
           <span className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             <span>Digital Platform Live & Secure</span>
