@@ -643,7 +643,7 @@ export default function App() {
       doc.setFont("Helvetica", "bold");
       doc.setFontSize(22);
       doc.setTextColor(33, 33, 33);
-      doc.text("DA CRIB KITCHEN", 105, 20, { align: "center" });
+      doc.text("DACRIB KITCHEN", 105, 20, { align: "center" });
       
       doc.setFont("Helvetica", "normal");
       doc.setFontSize(10);
